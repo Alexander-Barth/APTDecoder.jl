@@ -29,8 +29,11 @@ am_demodulation(y2) = abs.(DSP.Util.hilbert(y2))
 
 wavname = "/home/abarth/src/APTDecoder/test.wav"
 wavname = "/mnt/data1/abarth/Backup/abarth/testapt/gqrx_20180715_150114_137100000.wav"
+
 #wavname = "/home/abarth/testapt/gqrx_20180715_150114_137100000.wav"
 wavname = "/home/abarth/gqrx_20190804_141523_137100000.wav"
+wavname = "/home/abarth/testapt/gqrx_20180715_150114_137100000.wav"
+wavname = "/home/abarth/gqrx_20190814_192855_137917500.wav"
 
 y,Fs,nbits,opt = load(wavname)
 
@@ -112,6 +115,7 @@ pp = 1 .+ (0 : length(y_demod) ÷ inter - 2 ) * inter
 #pp = 1 .+ (0 : length(y_demod) ÷ inter - 2 ) * inter
 pp = 7338 .+ (0 : length(y_demod) ÷ inter - 2 ) * inter
 
+
 matrix = zeros(length(pp),inter)
 
 
@@ -123,6 +127,7 @@ function splot(s)
     nscan = length(s) ÷ inter
     imshow(reverse(reverse(reshape(s[1:inter*nscan],(inter,nscan))',dims=2),dims=1),  aspect = "auto")
 end
+
 
 for i = 1:length(pp)-1
 #   matrix[i,:] = signalshifted[pp[i] - length(syncA) : pp[i] + len_line - 1]
