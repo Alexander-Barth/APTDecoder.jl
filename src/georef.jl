@@ -10,14 +10,17 @@ satellite_name = "NOAA 15"
 pngname = "gqrx_20190811_075102_137620000.png";
 
 satellite_name = "NOAA 19"
-pngname = "gqrx_20190804_141523_137100000.png"
+pngname = "/home/abarth/gqrx_20190804_141523_137100000.png"
 
+#pngname = "/mnt/data1/abarth/Backup/abarth/testapt/gqrx_20180715_150114_137100000.png"
 
 program,datastr,timestr,frequency = split(replace(pngname,r".png$" => ""),"_")
 
 start = DateTime(parse(Int,datastr[1:4]),parse(Int,datastr[5:6]),parse(Int,datastr[7:8]),
                  parse(Int,timestr[1:2]),parse(Int,timestr[3:4]),parse(Int,timestr[5:6]))
 
+#start += Dates.Second(20)
+#start += Dates.Second(150)
 
 # get satellite orbit information (TLE)
 fname = "weather.txt"
@@ -61,7 +64,7 @@ t = 24*60*60*(jdnow - tle.epoch) .+ (-1:nrec) / scans_per_seconds
 
 o,r_TEME,v_TEME = propagate!(orbp, t);
 
-#eop_IAU1980 = get_iers_eop();
+eop_IAU1980 = get_iers_eop();
 
 α = range(-swath/2,stop=swath/2,length = np) # degree
 
@@ -74,6 +77,7 @@ lat = zeros(length(t))
 az = zeros(length(t)-2)
 
 r_ITRF = zeros(length(t),3)
+ground_station_TEME = zeros(length(t),3)
 v_ITRF_ = zeros(length(t),3)
 r_ppos = zeros(length(t),length(α),3)
 
@@ -82,6 +86,12 @@ plon = zeros(length(t)-2,length(α))
 plat = zeros(length(t)-2,length(α))
 pz = zeros(length(t)-2,length(α))
 
+# ground station
+glat = 50.5640 * pi/180
+glon = 5.5759 * pi/180
+gz = 200
+
+ground_station_ITRF = GeodetictoECEF(glat,glon,gz)
 
 for i = 1:length(t)
     datejd = tle.epoch + t[i]/(24*60*60)
@@ -90,6 +100,8 @@ for i = 1:length(t)
     r_ITRF[i,:] = M * r_TEME[i]
     v_ITRF_[i,:] = M * v_TEME[i]
     v_ITRF = M * v_TEME[i]
+
+    ground_station_TEME[i,:] = M \ ground_station_ITRF
 
     pos[i,:] = collect(ECEFtoGeodetic(r_ITRF[i,:]))
     lat[i] = 180 * pos[i,1]/pi
@@ -110,4 +122,15 @@ i = 1:r:size(data,1)
 j = 1:r:size(data,2);
 
 pcolormesh(plon[i,j],plat[i,j],data[i,j],cmap="gray")
-OceanPlot.plotmap()
+OceanPlot.plotmap(patchcolor = nothing, coastlinecolor = "r")
+
+
+# Doppler-shift
+d = ground_station_TEME - reduce(hcat,r_TEME)'
+vel = (d[3:end,:] - d[1:end-2,:]) * scans_per_seconds/2;
+
+d2 = d[2:end-1,:];
+e_obs = d2 ./ sqrt.(sum(abs2,d2,dims=2));
+vv = sum(vel .* e_obs,dims = 2)[:,1]
+
+ff = sqrt.((c .+ vv)./(c .- vv));
