@@ -53,6 +53,8 @@ function georeference(pngname,satellite_name,channel)
     # https://directory.eoportal.org/web/eoportal/satellite-missions/n/noaa-poes-series-5th-generation
     swath_m = 2900_000 # m
 
+    scans_per_seconds = 2.
+
     # swath with in degree (for a spherical earth)
     swath = swath_m / (a*pi/180)
 
@@ -65,8 +67,7 @@ function georeference(pngname,satellite_name,channel)
             data_all[:,1123:2027];
         end
 
-    data = data[end:-1:1,:]
-    data = data[:,end:-1:1]
+    data = data[end:-1:1,end:-1:1]
 
     nrec = size(data,1);
     np = size(data,2);
@@ -74,10 +75,7 @@ function georeference(pngname,satellite_name,channel)
     # compute satellite track
 
     orbp = init_orbit_propagator(Val{:sgp4}, tle);
-
     jdnow = DatetoJD(starttime)
-
-    scans_per_seconds = 2.
 
     # time [s] from the orbit epoch
     # two extra time steps (at the beginning and end)
@@ -85,68 +83,40 @@ function georeference(pngname,satellite_name,channel)
 
     o,r_TEME,v_TEME = propagate!(orbp, t);
 
-    # Convert position
-    # ECI(TEME) -> ECEF(ITRF)
-
+    # download the Earth Orientation Parameters (EOP)
     eop_IAU1980 = get_iers_eop();
 
-    α = range(-swath/2,stop=swath/2,length = np) # degree
+    α = range(-swath/2,stop=swath/2,length = np) # degrees
 
-    pos = zeros(length(t),3)
+    # position of the satellite in Geodetic coordinates
     lon = zeros(length(t))
     lat = zeros(length(t))
-    az = zeros(length(t)-2)
 
-    r_ITRF = zeros(length(t),3)
-    ground_station_TEME = zeros(length(t),3)
-    v_ITRF_ = zeros(length(t),3)
-    r_ppos = zeros(length(t),length(α),3)
-
+    # Geodetic coordinates of the satellite data
     plon = zeros(length(t)-2,length(α))
     plat = zeros(length(t)-2,length(α))
-    pz = zeros(length(t)-2,length(α))
 
-    # ground station
-    glat = 50.5640 * pi/180
-    glon = 5.5759 * pi/180
-    gz = 200
-
-    ground_station_ITRF = GeodetictoECEF(glat,glon,gz)
-
+    # Convert position
+    # ECI(TEME) -> ECEF(ITRF) -> Geodetic coordinates
     for i = 1:length(t)
         datejd = tle.epoch + t[i]/(24*60*60)
         M = rECItoECEF(TEME(), ITRF(), datejd, eop_IAU1980)
-        # position and velocity in ITRF
-        r_ITRF[i,:] = M * r_TEME[i]
-        v_ITRF_[i,:] = M * v_TEME[i]
-        v_ITRF = M * v_TEME[i]
+        # position in ITRF
+        r_ITRF = M * r_TEME[i]
 
-        ground_station_TEME[i,:] = M \ ground_station_ITRF
-
-        pos[i,:] = collect(ECEFtoGeodetic(r_ITRF[i,:]))
-        lat[i] = 180 * pos[i,1]/pi
-        lon[i] = 180 * pos[i,2]/pi
+        # position of the satellite in Geodetic coordinates
+        lat[i],lon[i] = ECEFtoGeodetic(r_ITRF)
+        lat[i] = 180 * lat[i]/pi
+        lon[i] = 180 * lon[i]/pi
     end
 
     for i = 2:length(t)-1
-        az[i-1] = GeoMapping.azimuth(lat[i-1],lon[i-1],lat[i+1],lon[i+1]) - 90
+        # direction perpenticular to the satellite ground track
+        az = GeoMapping.azimuth(lat[i-1],lon[i-1],lat[i+1],lon[i+1]) - 90
         for j = 1:length(α)
-            plat[i-1,j],plon[i-1,j] = GeoMapping.reckon(lat[i],lon[i],α[j],az[i-1])
+            plat[i-1,j],plon[i-1,j] = GeoMapping.reckon(lat[i],lon[i],α[j],az)
         end
     end
-
-    #=
-    # Doppler-shift
-    c = 3e8
-    d = ground_station_TEME - reduce(hcat,r_TEME)'
-    vel = (d[3:end,:] - d[1:end-2,:]) * scans_per_seconds/2;
-
-    d2 = d[2:end-1,:];
-    e_obs = d2 ./ sqrt.(sum(abs2,d2,dims=2));
-    vv = sum(vel .* e_obs,dims = 2)[:,1]
-
-    ff = sqrt.((c .+ vv)./(c .- vv));
-    =#
 
     return plon,plat,data
 
