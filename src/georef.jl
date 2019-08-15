@@ -4,18 +4,18 @@
     plon,plat,data = georeference(pngname,satellite_name,channel)
 
 Compute longitude and latitude of the NOAA APT satellite image in `pngname`
-using the orbit of the provided satellite with the name `satellite_name`
+using the orbit of the satellite with the name `satellite_name`
 (generally "NOAA 15", "NOAA 18", "NOAA 19").
 The file name `pngname` should  have the followng structure:
-`string_date_time_frequency.png` like `gqrx_20190811_075102_137620000.png`
-Date and time of the file name are in UTC. This is the the default file name
-output of gqrx.
+`string_date_time_frequency.png` like `gqrx_20190811_075102_137620000.png`.
+Date and time of the file name are in UTC.
+
 
 Example:
 ```
 satellite_name = "NOAA 15"
 pngname = "gqrx_20190811_075102_137620000.png";
-georeference(pngname,satellite_name)
+APTDecoder.georeference(pngname,satellite_name)
 ```
 """
 function georeference(pngname,satellite_name,channel)
