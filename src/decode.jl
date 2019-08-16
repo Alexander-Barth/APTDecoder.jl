@@ -34,12 +34,14 @@ wavname = "/mnt/data1/abarth/Backup/abarth/testapt/gqrx_20180715_150114_13710000
 wavname = "/home/abarth/gqrx_20190804_141523_137100000.wav"
 wavname = "/home/abarth/testapt/gqrx_20180715_150114_137100000.wav"
 wavname = "/home/abarth/gqrx_20190814_192855_137917500.wav"
+wavname = "gqrx_20190804_141523_137100000.wav"
 
 y,Fs,nbits,opt = load(wavname)
 
 #Fs2 = 20800.
 #Fs2 = 11025.
 Fs2 = 11024.
+Fs2 = 12480
 
 sync_frequency = [1040., # channel A
                   832.   # channel B
@@ -52,7 +54,7 @@ for i = 1:length(sync_frequency)
     bands_len = Fs2/sync_frequency[i]
     sync_frame[i] = -cos.(2*pi * (0:( (nbands-1) * bands_len -1 )) /  bands_len);
 end
-
+sync_frame[1] =  [-1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
 
 responsetype = DSP.Filters.Bandpass(400., 4400.,fs = Fs);
 designmethod = DSP.Filters.Butterworth(6)
@@ -76,9 +78,18 @@ y_demod = am_demodulation(y2);
 syncA = vcat(repeat([0, 128, 255, 128],7),zeros(7)) .- 128
 syncA = NOAA_SYNCA
 
+function markmax(aa)
+    mm = sh(aa);
+    tt = zeros(size(mm))
+    for i = 1:size(mm,2)
+        loc = findmax(mm[:,i])[2]
+        tt[loc,i] = 1
+    end
+    return tt[:]
+end
 
 function find_sync(y_demod,syncA)
-    mindistance = 5000
+    mindistance = 4992
 
     signalshifted = y_demod .- mean(y_demod);
 
@@ -101,22 +112,20 @@ end
 #y_demod = y_demod[4000:end]
 #=
 =#
-len_line = 2080
-len_line = round(Int,0.5 * Fs2)
-len_line = 5512
-len_line = 5522
 inter = 5512
 inter = round(Int,0.5 * Fs2)
 
-pp = [p[1] for p in peaks];
+pindex = find_sync(y_demod,sync_frame[1])
 
-pp = 4987 .+ (0 : length(y_demod) ÷ inter - 2 ) * inter
-pp = 1 .+ (0 : length(y_demod) ÷ inter - 2 ) * inter
-#pp = 1 .+ (0 : length(y_demod) ÷ inter - 2 ) * inter
-pp = 7338 .+ (0 : length(y_demod) ÷ inter - 2 ) * inter
+# pindex = [p[1] for p in peaks];
+
+# pindex = 4987 .+ (0 : length(y_demod) ÷ inter - 2 ) * inter
+# pindex = 1 .+ (0 : length(y_demod) ÷ inter - 2 ) * inter
+# #pindex = 1 .+ (0 : length(y_demod) ÷ inter - 2 ) * inter
+# pindex = 7338 .+ (0 : length(y_demod) ÷ inter - 2 ) * inter
 
 
-matrix = zeros(length(pp),inter)
+matrix = zeros(length(pindex),inter)
 
 
 function sh(s)
@@ -129,11 +138,9 @@ function splot(s)
 end
 
 
-for i = 1:length(pp)-1
-#   matrix[i,:] = signalshifted[pp[i] - length(syncA) : pp[i] + len_line - 1]
-#   matrix[i,:] = signalshifted[pp[i] : pp[i] + len_line - 1]
-#   matrix[i,:] = signalshifted[pp[i] : pp[i]+inter+1][1:inter]
-#   matrix[i,:] = signalshifted[pp[i] : pp[i+1]-1]
+for i = 1:length(pindex)-2
+   matrix[i,:] = y_demod[pindex[i] : pindex[i]+inter-1]
+#   matrix[i,:] = y_demod[pindex[i] : pindex[i+1]-1]
 end
 
 
