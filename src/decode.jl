@@ -5,24 +5,7 @@ using Statistics
 NOAA_SYNCA = [0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 NOAA_SYNCB = [0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0]
 
-# https://web.archive.org/web/20190814072342/https://noaa-apt.mbernardi.com.ar/how-it-works.html
 frequency_sync_A = 1040 # Hz
-
-function probe(start,imageA,imageB,y_demod)
-    NOAA_SYNCA = [0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    NOAA_SYNCB = [0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0]
-    i = start
-
-    conv = 0.
-
-    while (i < start + imageA + imageB + length(NOAA_SYNCA) + length(NOAA_SYNCB))
-        conv += y_demod[i:i+length(NOAA_SYNCA)-1]' * NOAA_SYNCA
-        i += imageA
-        conv += y_demod[i:i+length(NOAA_SYNCB)-1]' * NOAA_SYNCB
-        i += imageB
-    end
-    return conv
-end
 
 am_demodulation(y2) = abs.(DSP.Util.hilbert(y2))
 
@@ -41,25 +24,44 @@ y,Fs,nbits,opt = load(wavname)
 #Fs2 = 11025.
 Fs2 = 11024.
 Fs2 = 12480
+Fs2 = 3*4160
 
+# Fs2 should be a multiple of 4160 Hz and least 8320 Hz
+# 4160 is the least common multiple of 1040 and 832 (the frequency of the
+# sync A and B pulses)
+
+# https://web.archive.org/web/20190814072342/https://noaa-apt.mbernardi.com.ar/how-it-works.html
+# frequency ratio is 5/4
 sync_frequency = [1040., # channel A
                   832.   # channel B
                   ]
-
 nbands = 7
 
 sync_frame = Vector{Vector{Int}}(undef,length(sync_frequency))
-for i = 1:length(sync_frequency)
-#    bands_len = Fs2/sync_frequency[i]
-    pulse_len = round(Int,Fs2/(2*sync_frequency[i]))
-    #    sync_frame[i] = vcat( -cos.(2*pi * (0:( nbands * bands_len -1 )) /  bands_len), fill(-1.,4*pulse_len ))
-    # 7 pulses followed by silence
-    sync_frame[i] = vcat(repeat(vcat(fill(-1,pulse_len),
-                                     fill(1,pulse_len)),
-                                nbands),
-                         fill(-1,4*pulse_len ))
+
+i = 1;
+pulse_len = round(Int,Fs2/(2*sync_frequency[i]))
+# 7 pulses followed by silence
+sync_frame[i] = vcat(
+    fill(-1,pulse_len),
+    repeat(vcat(fill(-1,pulse_len),
+                fill(1,pulse_len)),
+           nbands),
+    fill(-1,5*pulse_len ))
+
+i = 2;
+pulse_len_on  = round(Int,3/5 * Fs2/(sync_frequency[i]))
+pulse_len_off = round(Int,2/5 * Fs2/(sync_frequency[i]))
+# 7 pulses followed by silence
+sync_frame[i] = vcat(
+    fill(-1,pulse_len_off ),
+    repeat(vcat(fill(-1,pulse_len_off),
+                fill(1,pulse_len_on)),
+           nbands),
+    fill(-1,pulse_len_on )) # the last -1 is as long a the previous +1
+
 #    sync_frame[i] = vcat(repeat(vcat(fill(-1,pulse_len),fill(1,pulse_len)),nbands),  fill(-1,2*pulse_len ))
-end
+#end
 
 responsetype = DSP.Filters.Bandpass(400., 4400.,fs = Fs);
 designmethod = DSP.Filters.Butterworth(6)
@@ -154,8 +156,9 @@ inter = round(Int,0.5 * Fs2)
 
 #pindex_ = find_sync(y_demod,sync_frame[1],inter)
 pindex = find_sync2(y_demod,sync_frame[1],inter)
+#pindex = find_sync2(y_demod,sync_frame[2],inter)
 
-pindex .+= 3231
+#pindex .+= 3231
 # pindex = [p[1] for p in peaks];
 
 # pindex = 4987 .+ (0 : length(y_demod) ÷ inter - 2 ) * inter
@@ -184,8 +187,8 @@ for i = 1:length(pindex)
     end
 end
 
-tt_ = zeros(size(y_demod));tt_[pindex_] .= 1;
-tt = zeros(size(y_demod));tt[pindex] .= 1;
+#tt_ = zeros(size(y_demod));tt_[pindex_] .= 1;
+#tt = zeros(size(y_demod));tt[pindex] .= 1;
 
 #=
 figure();plot(y_demod,ls="-",marker=".",lw=0.5,ms=1)
@@ -202,3 +205,5 @@ clf();pcolormesh(mm[:,1,:]')
 vmin,vmax = quantile(view(matrix,:),[0.01,0.99])
 matrix[matrix .> vmax] .= vmax;
 matrix[matrix .< vmin] .= vmin;
+
+#figure(7); clf(); imshow(matrix[end:-1:1,end:-1:1], aspect="auto"); colorbar();
