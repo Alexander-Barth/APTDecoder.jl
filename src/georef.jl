@@ -153,7 +153,7 @@ function georeference(data,satellite_name,datatime,starttime)
 
 end
 
-function plot(plon,plat,data)
-    pcolormesh(plon,plat,data,cmap="gray")
-    OceanPlot.plotmap(patchcolor = nothing, coastlinecolor = "r")
+function plot(plon,plat,data; cmap = "RdYlBu_r")
+    pcolormesh(plon,plat,data,cmap=cmap)
+    OceanPlot.plotmap(patchcolor = nothing, coastlinecolor = "b")
 end

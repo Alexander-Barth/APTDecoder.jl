@@ -34,5 +34,9 @@ title("Channel B")
 starttime = APTDecoder.starttimename(wavname)
 
 Alon,Alat,Adata = APTDecoder.georeference(channelA,satellite_name,datatime,starttime)
-figure("Channel a - geo")
+figure("Channel A - geo")
 APTDecoder.plot(Alon,Alat,Adata)
+
+Blon,Blat,Bdata = BPTDecoder.georeference(channelB,satellite_name,datatime,starttime)
+figure("Channel B - geo")
+APTDecoder.plot(Blon,Blat,Bdata)
