@@ -63,6 +63,70 @@ function mark_sync(y_demod,syncA,inter)
     return tt
 end
 
+
+function sh(s,inter)
+    nscan = length(s) ÷ inter
+    reshape(s[1:inter*nscan],(inter,nscan))
+end
+function splot(s,inter)
+    nscan = length(s) ÷ inter
+    imshow(reverse(reverse(reshape(s[1:inter*nscan],(inter,nscan))',dims=2),dims=1),  aspect = "auto")
+end
+
+
+function decode(y,Fs)
+
+    # Fs2 should be a multiple of 4160 Hz and least 8320 Hz
+    # 4160 is the least common multiple of 1040 and 832 (the frequency of the
+    # sync A and B pulses)
+
+    Fs2 = 3*4160
+
+    # https://web.archive.org/web/20190814072342/https://noaa-apt.mbernardi.com.ar/how-it-works.html
+    # frequency ratio is 5/4
+    sync_frequency = [1040., # channel A
+                      832.   # channel B
+                      ]
+
+    scans_per_seconds = 2
+
+    # low and high frequency for the band-pass filter (in Hz)
+    wpass = (400., 4400.)
+
+    responsetype = DSP.Filters.Bandpass(wpass[1],wpass[2],fs = Fs);
+    designmethod = DSP.Filters.Butterworth(6)
+
+    yf = DSP.filt(DSP.digitalfilter(responsetype, designmethod), y[:,1]);
+
+    y2 = DSP.Filters.resample(yf, float(Fs2) / float(Fs) )
+
+    y_demod = am_demodulation(y2);
+
+    sync_frame = gen_sync_frame(Fs2)
+
+    inter = round(Int,Fs2/scans_per_seconds)
+
+    pindex = find_sync(y_demod,sync_frame[1],inter)
+
+    matrix = zeros(length(pindex),inter)
+
+    for i = 1:length(pindex)
+        if pindex[i]+inter-1 <= length(y_demod)
+            matrix[i,:] = y_demod[pindex[i] : pindex[i]+inter-1]
+            #   matrix[i,:] = y_demod[pindex[i] : pindex[i+1]-1]
+        end
+    end
+
+    return matrix
+end
+
+
+
+#figure(7); clf(); imshow(matrix[end:-1:1,end:-1:1], aspect="auto"); colorbar();
+
+
+
+
 wavname = "/home/abarth/src/APTDecoder/test.wav"
 wavname = "/mnt/data1/abarth/Backup/abarth/testapt/gqrx_20180715_150114_137100000.wav"
 
@@ -74,73 +138,8 @@ wavname = "gqrx_20190804_141523_137100000.wav"
 
 y,Fs,nbits,opt = load(wavname)
 
-# Fs2 should be a multiple of 4160 Hz and least 8320 Hz
-# 4160 is the least common multiple of 1040 and 832 (the frequency of the
-# sync A and B pulses)
-
-Fs2 = 3*4160
-
-# https://web.archive.org/web/20190814072342/https://noaa-apt.mbernardi.com.ar/how-it-works.html
-# frequency ratio is 5/4
-sync_frequency = [1040., # channel A
-                  832.   # channel B
-                  ]
-
-scans_per_seconds = 2
-
-responsetype = DSP.Filters.Bandpass(400., 4400.,fs = Fs);
-designmethod = DSP.Filters.Butterworth(6)
-
-yf = DSP.filt(DSP.digitalfilter(responsetype, designmethod), y[:,1]);
-
-y2 = DSP.Filters.resample(yf, float(Fs2) / float(Fs) )
-
-y_demod = am_demodulation(y2);
-
-
-sync_frame = gen_sync_frame(Fs2)
-
-inter = round(Int,Fs2/scans_per_seconds)
-
-pindex = find_sync(y_demod,sync_frame[1],inter)
-
-matrix = zeros(length(pindex),inter)
-
-
-function sh(s)
-    nscan = length(s) ÷ inter
-    reshape(s[1:inter*nscan],(inter,nscan))
-end
-function splot(s)
-    nscan = length(s) ÷ inter
-    imshow(reverse(reverse(reshape(s[1:inter*nscan],(inter,nscan))',dims=2),dims=1),  aspect = "auto")
-end
-
-
-for i = 1:length(pindex)
-    if pindex[i]+inter-1 <= length(y_demod)
-        matrix[i,:] = y_demod[pindex[i] : pindex[i]+inter-1]
-        #   matrix[i,:] = y_demod[pindex[i] : pindex[i+1]-1]
-    end
-end
-
-#tt_ = zeros(size(y_demod));tt_[pindex_] .= 1;
-#tt = zeros(size(y_demod));tt[pindex] .= 1;
-
-#=
-figure();plot(y_demod,ls="-",marker=".",lw=0.5,ms=1)
-peaks
-size(matrix)
-=#
-
-#nl = length(peaks) ÷ 2
-#mm = reshape(matrix[1:nl*2,:],nl,2,size(matrix,2));
-#=
-clf();pcolormesh(mm[:,1,:]')
-=#
+matrix = decode(y,Fs)
 
 vmin,vmax = quantile(view(matrix,:),[0.01,0.99])
 matrix[matrix .> vmax] .= vmax;
 matrix[matrix .< vmin] .= vmin;
-
-#figure(7); clf(); imshow(matrix[end:-1:1,end:-1:1], aspect="auto"); colorbar();
