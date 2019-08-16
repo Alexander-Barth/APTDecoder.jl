@@ -8,7 +8,7 @@ using OceanPlot
 using GeoMapping
 
 include("georef.jl")
-#include("decode.jl")
+include("decode.jl")
 
 
 

@@ -32,50 +32,77 @@ function gen_sync_frame(Fs2,sync_frequency)
     return sync_frame
 end
 
+
+
+
+
+
 function find_sync(y_demod,sync_frame,inter)
-    aa = DSP.conv(y_demod,reverse(sync_frame));
-    index0 = findmax(aa)[2];
+    # minimum and maximum distance between sync frames
+    mindistance = (8*inter) ÷ 10
+    maxdistance = (12*inter) ÷ 10
+
+    conv_sync = DSP.conv(y_demod,reverse(sync_frame));
+    # overall strongest sync frame
+    index0 = findmax(conv_sync)[2];
+
+    # look for all sync frames after the strongest sync frame
     index = index0
-    after_index = []
-    while index + maxdistance <= length(aa)
-        i = findmax(aa[index .+ (mindistance:maxdistance)])[2] + index+mindistance-1
+    after_index = Int[]
+    while index + maxdistance <= length(conv_sync)
+        i = findmax(conv_sync[index .+ (mindistance:maxdistance)])[2] + index+mindistance-1
+
+        if i+inter > length(conv_sync)
+            # ignore incomplete scan lines
+            break
+        end
+
         push!(after_index,i)
         index = i
     end
 
+    # look for all sync frames before the strongest sync frame
     index = index0
-    before_index = []
+    before_index = Int[]
     while index - maxdistance >= 1
-        i = findmax(aa[index-maxdistance : index-mindistance])[2] + index-maxdistance-1
+        i = findmax(conv_sync[index-maxdistance : index-mindistance])[2] + index-maxdistance-1
         push!(before_index,i)
         index = i
     end
 
-    pindex = vcat(reverse(before_index),[index0],after_index)
-    return pindex .- (length(sync_frame) - 1)
+    sync_frame_index = vcat(reverse(before_index),[index0],after_index)
+    return sync_frame_index .- (length(sync_frame) - 1)
 end
 
 
-function mark_sync(y_demod,syncA,inter)
-    pindex = find_sync(y_demod,syncA,inter)
+function mark_sync(y_demod,sync_frame,inter)
+    sync_frame_index = find_sync(y_demod,sync_frame,inter)
     tt = zeros(size(y_demod))
-    tt[pindex] .= 1;
+    tt[sync_frame_index] .= 1;
     return tt
 end
 
-
-function sh(s,inter)
+function reshape_signal(s,inter)
     nscan = length(s) ÷ inter
-    reshape(s[1:inter*nscan],(inter,nscan))
-end
-function splot(s,inter)
-    nscan = length(s) ÷ inter
-    imshow(reverse(reverse(reshape(s[1:inter*nscan],(inter,nscan))',dims=2),dims=1),  aspect = "auto")
+    return reshape(s[1:inter*nscan],(inter,nscan))
 end
 
+"""
+    datatime, (channelA,channelB), data = decode(y,Fs)
 
+Decode the APT image in a time series `y` defined at a frequency `Fs` (in Hz).
+`datatime` is the time in seconds counting from the beginning of the recording.
+
+# Example
+```julia
+
+wavname = "gqrx_20190804_141523_137100000.wav"
+y,Fs,nbits,opt = load(wavname)
+datatime,(channelA,channelB),data = APTDecode.decode(y,Fs)
+
+```
+"""
 function decode(y,Fs)
-
     # Fs2 should be a multiple of 4160 Hz and least 8320 Hz
     # 4160 is the least common multiple of 1040 and 832 (the frequency of the
     # sync A and B pulses)
@@ -102,44 +129,20 @@ function decode(y,Fs)
 
     y_demod = am_demodulation(y2);
 
-    sync_frame = gen_sync_frame(Fs2)
+    sync_frame = gen_sync_frame(Fs2,sync_frequency)
 
     inter = round(Int,Fs2/scans_per_seconds)
 
-    pindex = find_sync(y_demod,sync_frame[1],inter)
+    sync_frame_index = find_sync(y_demod,sync_frame[1],inter)
 
-    matrix = zeros(length(pindex),inter)
+    data = zeros(length(sync_frame_index),inter)
+    datatime = (sync_frame_index .- 1) / Fs2
 
-    for i = 1:length(pindex)
-        if pindex[i]+inter-1 <= length(y_demod)
-            matrix[i,:] = y_demod[pindex[i] : pindex[i]+inter-1]
-            #   matrix[i,:] = y_demod[pindex[i] : pindex[i+1]-1]
-        end
+    for i = 1:length(sync_frame_index)
+        data[i,:] = y_demod[sync_frame_index[i] : sync_frame_index[i]+inter-1]
     end
 
-    return matrix
+    # channel A and B
+    channels = (view(data,:,259:2725), view(data,:,3380:6103))
+    return datatime,channels,data
 end
-
-
-
-#figure(7); clf(); imshow(matrix[end:-1:1,end:-1:1], aspect="auto"); colorbar();
-
-
-
-
-wavname = "/home/abarth/src/APTDecoder/test.wav"
-wavname = "/mnt/data1/abarth/Backup/abarth/testapt/gqrx_20180715_150114_137100000.wav"
-
-#wavname = "/home/abarth/testapt/gqrx_20180715_150114_137100000.wav"
-wavname = "/home/abarth/gqrx_20190804_141523_137100000.wav"
-wavname = "/home/abarth/testapt/gqrx_20180715_150114_137100000.wav"
-wavname = "/home/abarth/gqrx_20190814_192855_137917500.wav"
-wavname = "gqrx_20190804_141523_137100000.wav"
-
-y,Fs,nbits,opt = load(wavname)
-
-matrix = decode(y,Fs)
-
-vmin,vmax = quantile(view(matrix,:),[0.01,0.99])
-matrix[matrix .> vmax] .= vmax;
-matrix[matrix .< vmin] .= vmin;
