@@ -24,7 +24,6 @@ function probe(start,imageA,imageB,y_demod)
     return conv
 end
 
-
 am_demodulation(y2) = abs.(DSP.Util.hilbert(y2))
 
 wavname = "/home/abarth/src/APTDecoder/test.wav"
@@ -49,12 +48,18 @@ sync_frequency = [1040., # channel A
 
 nbands = 7
 
-sync_frame = Vector{Vector{Float64}}(undef,length(sync_frequency))
+sync_frame = Vector{Vector{Int}}(undef,length(sync_frequency))
 for i = 1:length(sync_frequency)
-    bands_len = Fs2/sync_frequency[i]
-    sync_frame[i] = -cos.(2*pi * (0:( (nbands-1) * bands_len -1 )) /  bands_len);
+#    bands_len = Fs2/sync_frequency[i]
+    pulse_len = round(Int,Fs2/(2*sync_frequency[i]))
+    #    sync_frame[i] = vcat( -cos.(2*pi * (0:( nbands * bands_len -1 )) /  bands_len), fill(-1.,4*pulse_len ))
+    # 7 pulses followed by silence
+    sync_frame[i] = vcat(repeat(vcat(fill(-1,pulse_len),
+                                     fill(1,pulse_len)),
+                                nbands),
+                         fill(-1,4*pulse_len ))
+#    sync_frame[i] = vcat(repeat(vcat(fill(-1,pulse_len),fill(1,pulse_len)),nbands),  fill(-1,2*pulse_len ))
 end
-sync_frame[1] =  [-1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
 
 responsetype = DSP.Filters.Bandpass(400., 4400.,fs = Fs);
 designmethod = DSP.Filters.Butterworth(6)
@@ -88,8 +93,9 @@ function markmax(aa)
     return tt[:]
 end
 
-function find_sync(y_demod,syncA)
-    mindistance = 4992
+function find_sync(y_demod,syncA,inter)
+    mindistance = (8*inter) ÷ 10
+    maxdistance = (12*inter) ÷ 10
 
     signalshifted = y_demod .- mean(y_demod);
 
@@ -106,17 +112,50 @@ function find_sync(y_demod,syncA)
         end
     end
 
-    pp = [p[1] for p in peaks];
-    return pp
+    pindex = [p[1] for p in peaks];
+    return pindex
 end
+
+function find_sync2(y_demod,sync_frame,inter)
+
+    aa = DSP.conv(y_demod,reverse(sync_frame));
+    index0 = findmax(aa)[2];
+    index = index0
+    after_index = []
+    while index + maxdistance <= length(aa)
+        i = findmax(aa[index .+ (mindistance:maxdistance)])[2] + index+mindistance-1
+        push!(after_index,i)
+        index = i
+    end
+
+    index = index0
+    before_index = []
+    while index - maxdistance >= 1
+        i = findmax(aa[index-maxdistance : index-mindistance])[2] + index-maxdistance-1
+        push!(before_index,i)
+        index = i
+    end
+
+    pindex = vcat(reverse(before_index),[index0],after_index)
+    return pindex .- (length(sync_frame) - 1)
+end
+
+function mark_sync(y_demod,syncA)
+    pindex = find_sync(y_demod,syncA,inter)
+    tt = zeros(size(y_demod));tt[pindex] .= 1;
+    return tt
+end
+
 #y_demod = y_demod[4000:end]
 #=
 =#
-inter = 5512
+
 inter = round(Int,0.5 * Fs2)
 
-pindex = find_sync(y_demod,sync_frame[1])
+#pindex_ = find_sync(y_demod,sync_frame[1],inter)
+pindex = find_sync2(y_demod,sync_frame[1],inter)
 
+pindex .+= 3231
 # pindex = [p[1] for p in peaks];
 
 # pindex = 4987 .+ (0 : length(y_demod) ÷ inter - 2 ) * inter
@@ -138,11 +177,15 @@ function splot(s)
 end
 
 
-for i = 1:length(pindex)-2
-   matrix[i,:] = y_demod[pindex[i] : pindex[i]+inter-1]
-#   matrix[i,:] = y_demod[pindex[i] : pindex[i+1]-1]
+for i = 1:length(pindex)
+    if pindex[i]+inter-1 <= length(y_demod)
+        matrix[i,:] = y_demod[pindex[i] : pindex[i]+inter-1]
+        #   matrix[i,:] = y_demod[pindex[i] : pindex[i+1]-1]
+    end
 end
 
+tt_ = zeros(size(y_demod));tt_[pindex_] .= 1;
+tt = zeros(size(y_demod));tt[pindex] .= 1;
 
 #=
 figure();plot(y_demod,ls="-",marker=".",lw=0.5,ms=1)
@@ -155,3 +198,7 @@ size(matrix)
 #=
 clf();pcolormesh(mm[:,1,:]')
 =#
+
+vmin,vmax = quantile(view(matrix,:),[0.01,0.99])
+matrix[matrix .> vmax] .= vmax;
+matrix[matrix .< vmin] .= vmin;
