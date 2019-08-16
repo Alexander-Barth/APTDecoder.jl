@@ -143,6 +143,7 @@ function decode(y,Fs)
     end
 
     # channel A and B
-    channels = (view(data,:,259:2725), view(data,:,3380:6103))
+    channels = (view(data,:,259:2985), view(data,:,3380:6103))
+    #channels = (view(data,:,259:3185), view(data,:,3380:6103))
     return datatime,channels,data
 end

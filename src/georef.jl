@@ -1,3 +1,58 @@
+function starttimename(pngname::String)
+    pngname_parts = split(replace(pngname,r".png|.wav$" => ""),"_")
+
+    if length(pngname_parts) !== 4
+        error("File name $(pngname) has not the right format")
+    end
+
+    program,datastr,timestr,frequency = pngname_parts
+
+    return DateTime(
+        parse(Int,datastr[1:4]),parse(Int,datastr[5:6]),parse(Int,datastr[7:8]),
+        parse(Int,timestr[1:2]),parse(Int,timestr[3:4]),parse(Int,timestr[5:6]))
+end
+
+function wxload(pngname)
+    starttime = starttimename(pngname)
+
+    data_all = convert(Array{Float32,2},imread(pngname)) :: Array{Float32,2}
+
+    channel = (data_all[:,83:990][end:-1:1,end:-1:1],
+               data_all[:,1123:2027][end:-1:1,end:-1:1])
+
+    scans_per_seconds = 2.
+
+    datatime = (0:size(data_all,1)-1)/scans_per_seconds
+    return datatime,channel,data_all[end:-1:1,end:-1:1]
+end
+
+function georeference(pngname,satellite_name,channel; starttime = DateTime(1,1,1,0,0,0))
+    if !(channel in ['a','b'])
+        error("channel must be 'a' or 'b'")
+    end
+
+    if starttime == DateTime(1,1,1,0,0,0)
+        starttime = starttimename(pngname)
+    end
+
+    data_all = convert(Array{Float32,2},imread(pngname)) :: Array{Float32,2}
+
+    data =
+        if channel == 'a'
+            data_all[:,83:990];
+        else
+            data_all[:,1123:2027];
+        end
+
+    @show size(data)
+    scans_per_seconds = 2.
+
+    data = data[end:-1:1,end:-1:1]
+    datatime = (0:size(data,1)-1)/scans_per_seconds
+
+    plon,plat,data = georeference(data,satellite_name,datatime,starttime)
+    return plon,plat,data
+end
 
 
 """
@@ -18,25 +73,7 @@ pngname = "gqrx_20190811_075102_137620000.png";
 APTDecoder.georeference(pngname,satellite_name)
 ```
 """
-function georeference(pngname,satellite_name,channel)
-
-                      starttime = DateTime(1,1,1,0,0,0)
-    if !(channel in ['a','b'])
-        error("channel must be 'a' or 'b'")
-    end
-
-    if starttime == DateTime(1,1,1,0,0,0)
-        pngname_parts = split(replace(pngname,r".png$" => ""),"_")
-
-        if length(pngname_parts) !== 4
-            error("File name $(pngname) has not the right format")
-        end
-
-        program,datastr,timestr,frequency = pngname_parts
-
-        starttime = DateTime(parse(Int,datastr[1:4]),parse(Int,datastr[5:6]),parse(Int,datastr[7:8]),
-                             parse(Int,timestr[1:2]),parse(Int,timestr[3:4]),parse(Int,timestr[5:6]))
-    end
+function georeference(data,satellite_name,datatime,starttime)
 
     # get satellite orbit information (TLE)
     fname = "weather.txt"
@@ -54,20 +91,10 @@ function georeference(pngname,satellite_name,channel)
     swath_m = 2900_000 # m
 
     scans_per_seconds = 2.
+    Δt = 1/scans_per_seconds
 
     # swath with in degree (for a spherical earth)
     swath = swath_m / (a*pi/180)
-
-    data_all = convert(Array{Float32,2},imread(pngname)) :: Array{Float32,2}
-
-    data =
-        if channel == 'a'
-            data_all[:,83:990];
-        else
-            data_all[:,1123:2027];
-        end
-
-    data = data[end:-1:1,end:-1:1]
 
     nrec = size(data,1);
     np = size(data,2);
@@ -79,7 +106,11 @@ function georeference(pngname,satellite_name,channel)
 
     # time [s] from the orbit epoch
     # two extra time steps (at the beginning and end)
-    t = 24*60*60*(jdnow - tle.epoch) .+ (-1:nrec) / scans_per_seconds
+
+    t = 24*60*60*(jdnow - tle.epoch) .+
+        vcat([datatime[1] - Δt ],
+             datatime,
+             datatime[end] + Δt)
 
     o,r_TEME,v_TEME = propagate!(orbp, t);
 
