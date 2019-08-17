@@ -12,6 +12,8 @@ wavname = "/home/abarth/testapt/gqrx_20180715_150114_137100000.wav"
 wavname = "/home/abarth/gqrx_20190814_192855_137917500.wav"
 wavname = "gqrx_20190804_141523_137100000.wav"
 
+satellite_name = "NOAA 19"
+
 y,Fs,nbits,opt = load(wavname)
 
 datatime,(channelA,channelB),data = APTDecoder.decode(y,Fs)
