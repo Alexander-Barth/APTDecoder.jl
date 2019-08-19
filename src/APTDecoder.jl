@@ -5,7 +5,6 @@ using Dates
 using LinearAlgebra
 using SatelliteToolbox
 using PyPlot
-using OceanPlot
 using GeoMapping
 using CodecZlib
 using RemoteFiles

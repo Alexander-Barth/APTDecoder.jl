@@ -147,3 +147,38 @@ function decode(y,Fs)
     #channels = (view(data,:,259:3185), view(data,:,3380:6103))
     return datatime,channels,data
 end
+
+
+function makeplots(wavname,satellite_name; starttime = nothing, prefix = nothing,
+                   qrange = (0.01,0.99))
+    if starttime == nothing
+        starttime = APTDecoder.starttimename(basename(wavname))
+    end
+
+    if prefix == nothing
+        prefix = replace(wavname,r".wav$" => "")
+    end
+
+    @show starttime
+
+    y,Fs,nbits,opt = load(wavname)
+
+    datatime,(channelA,channelB),data = APTDecoder.decode(y,Fs)
+
+    vmin,vmax = quantile(view(data,:),[qrange[1],qrange[1]])
+    data[data .> vmax] .= vmax;
+    data[data .< vmin] .= vmin;
+
+
+    dpi = 150
+
+    Alon,Alat,Adata = APTDecoder.georeference(channelA,satellite_name,datatime,starttime)
+    figure("Channel A - geo")
+    APTDecoder.plot(Alon,Alat,Adata)
+    savefig(prefix * "_channel_a.png",dpi=dpi)
+
+    Blon,Blat,Bdata = APTDecoder.georeference(channelB,satellite_name,datatime,starttime)
+    figure("Channel B - geo")
+    APTDecoder.plot(Blon,Blat,Bdata)
+    savefig(prefix * "_channel_b.png",dpi=dpi)
+end
