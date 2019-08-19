@@ -153,11 +153,3 @@ function georeference(data,satellite_name,datatime,starttime)
 
 end
 
-function plot(plon,plat,data; cmap = "RdYlBu_r")
-    pcolormesh(plon,plat,data,cmap=cmap)
-    lon,lat,lsmask = landseamask(;resolution='l',grid=5)
-    contour(lon,lat,lsmask',[0.5],linewidths=[1.],colors="darkgrey");
-    xlim(extrema(plon))
-    ylim(extrema(plat))
-    return nothing
-end

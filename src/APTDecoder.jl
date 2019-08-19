@@ -12,6 +12,7 @@ using RemoteFiles
 include("georef.jl")
 include("decode.jl")
 include("data.jl")
+include("plot.jl")
 
 
 
