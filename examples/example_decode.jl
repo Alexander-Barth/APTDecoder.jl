@@ -1,7 +1,7 @@
-using FileIO
-using Statistics
 import APTDecoder
+using Statistics
 using PyPlot
+using WAV
 
 wavname = "/home/abarth/src/APTDecoder/test.wav"
 wavname = "/mnt/data1/abarth/Backup/abarth/testapt/gqrx_20180715_150114_137100000.wav"
@@ -14,7 +14,7 @@ wavname = "gqrx_20190804_141523_137100000.wav"
 
 satellite_name = "NOAA 19"
 
-y,Fs,nbits,opt = load(wavname)
+y,Fs,nbits,opt = wavread(wavname)
 
 datatime,(channelA,channelB),data = APTDecoder.decode(y,Fs)
 

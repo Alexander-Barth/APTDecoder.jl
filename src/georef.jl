@@ -20,8 +20,6 @@ function wxload(pngname)
     channel = (data_all[:,83:990][end:-1:1,end:-1:1],
                data_all[:,1123:2027][end:-1:1,end:-1:1])
 
-    scans_per_seconds = 2.
-
     datatime = (0:size(data_all,1)-1)/scans_per_seconds
     return datatime,channel,data_all[end:-1:1,end:-1:1]
 end
@@ -45,7 +43,6 @@ function georeference(pngname,satellite_name,channel; starttime = DateTime(1,1,1
         end
 
     @show size(data)
-    scans_per_seconds = 2.
 
     data = data[end:-1:1,end:-1:1]
     datatime = (0:size(data,1)-1)/scans_per_seconds
@@ -90,7 +87,6 @@ function georeference(data,satellite_name,datatime,starttime)
     # https://directory.eoportal.org/web/eoportal/satellite-missions/n/noaa-poes-series-5th-generation
     swath_m = 2900_000 # m
 
-    scans_per_seconds = 2.
     Δt = 1/scans_per_seconds
 
     # swath with in degree (for a spherical earth)

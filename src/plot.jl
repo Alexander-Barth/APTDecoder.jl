@@ -21,7 +21,7 @@ function makeplots(wavname,satellite_name;
 
     @show starttime
 
-    y,Fs,nbits,opt = load(wavname)
+    y,Fs,nbits,opt = wavread(wavname)
 
     datatime,(channelA,channelB),data = APTDecoder.decode(y,Fs)
 

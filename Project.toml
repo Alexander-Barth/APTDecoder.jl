@@ -4,14 +4,13 @@ authors = ["Alexander Barth <barth.alexander@gmail.com>"]
 version = "0.1.0"
 
 [deps]
-BlackBoxOptim = "a134a8b2-14d6-55f6-9291-3336d3ab0209"
+CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
 DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
-ImageFiltering = "6a3955dd-da59-5b1f-98d4-e7296123deb5"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
+RemoteFiles = "cbe49d4c-5af1-5b60-bb70-0a60aa018e1b"
 SatelliteToolbox = "6ac157d9-b43d-51bb-8fab-48bf53814f4a"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 WAV = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"

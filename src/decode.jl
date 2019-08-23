@@ -1,7 +1,3 @@
-using FileIO
-import DSP
-using Statistics
-
 am_demodulation(y2) = abs.(DSP.Util.hilbert(y2))
 
 function gen_sync_frame(Fs2,sync_frequency)
@@ -37,10 +33,10 @@ end
 
 
 
-function find_sync(y_demod,sync_frame,inter)
+function find_sync(y_demod,sync_frame,frame_len)
     # minimum and maximum distance between sync frames
-    mindistance = (8*inter) ÷ 10
-    maxdistance = (12*inter) ÷ 10
+    mindistance = (8*frame_len) ÷ 10
+    maxdistance = (12*frame_len) ÷ 10
 
     conv_sync = DSP.conv(y_demod,reverse(sync_frame));
     # overall strongest sync frame
@@ -51,12 +47,6 @@ function find_sync(y_demod,sync_frame,inter)
     after_index = Int[]
     while index + maxdistance <= length(conv_sync)
         i = findmax(conv_sync[index .+ (mindistance:maxdistance)])[2] + index+mindistance-1
-
-        if i+inter > length(conv_sync)
-            # ignore incomplete scan lines
-            break
-        end
-
         push!(after_index,i)
         index = i
     end
@@ -75,16 +65,16 @@ function find_sync(y_demod,sync_frame,inter)
 end
 
 
-function mark_sync(y_demod,sync_frame,inter)
-    sync_frame_index = find_sync(y_demod,sync_frame,inter)
+function mark_sync(y_demod,sync_frame,frame_len)
+    sync_frame_index = find_sync(y_demod,sync_frame,frame_len)
     tt = zeros(size(y_demod))
     tt[sync_frame_index] .= 1;
     return tt
 end
 
-function reshape_signal(s,inter)
-    nscan = length(s) ÷ inter
-    return reshape(s[1:inter*nscan],(inter,nscan))
+function reshape_signal(s,frame_len)
+    nscan = length(s) ÷ frame_len
+    return reshape(s[1:frame_len*nscan],(frame_len,nscan))
 end
 
 """
@@ -95,9 +85,11 @@ Decode the APT image in a time series `y` defined at a frequency `Fs` (in Hz).
 
 # Example
 ```julia
+using WAV
+using APTDecoder
 
 wavname = "gqrx_20190804_141523_137100000.wav"
-y,Fs,nbits,opt = load(wavname)
+y,Fs,nbits,opt = wavread(wavname)
 datatime,(channelA,channelB),data = APTDecode.decode(y,Fs)
 
 ```
@@ -109,42 +101,46 @@ function decode(y,Fs)
 
     Fs2 = 3*4160
 
-    # https://web.archive.org/web/20190814072342/https://noaa-apt.mbernardi.com.ar/how-it-works.html
-    # frequency ratio is 5/4
-    sync_frequency = [1040., # channel A
-                      832.   # channel B
-                      ]
-
-    scans_per_seconds = 2
-
     # low and high frequency for the band-pass filter (in Hz)
     wpass = (400., 4400.)
 
     responsetype = DSP.Filters.Bandpass(wpass[1],wpass[2],fs = Fs);
     designmethod = DSP.Filters.Butterworth(6)
 
+    #figure(4); clf(); psd(y[:,1],Fs = Fs, NFFT=1024)
     yf = DSP.filt(DSP.digitalfilter(responsetype, designmethod), y[:,1]);
+    #figure(4); clf(); psd(yf[:,1],Fs = Fs, NFFT=1024)
 
     y2 = DSP.Filters.resample(yf, float(Fs2) / float(Fs) )
 
+    # AM demodulation using the Hilbert Transform
     y_demod = am_demodulation(y2);
 
+    # generate the syncronization frame at the frequency Fs2
     sync_frame = gen_sync_frame(Fs2,sync_frequency)
 
-    inter = round(Int,Fs2/scans_per_seconds)
+    # length of a frame
+    frame_len = round(Int,Fs2/scans_per_seconds)
 
-    sync_frame_index = find_sync(y_demod,sync_frame[1],inter)
+    sync_frame_index = find_sync(y_demod,sync_frame[1],frame_len)
 
-    data = zeros(length(sync_frame_index),inter)
-    datatime = (sync_frame_index .- 1) / Fs2
-
+    # complete frames
+    complete_frame_index = Int[]
     for i = 1:length(sync_frame_index)
-        data[i,:] = y_demod[sync_frame_index[i] : sync_frame_index[i]+inter-1]
+        if sync_frame_index[i]+frame_len-1 <= length(y_demod)
+            push!(complete_frame_index,sync_frame_index[i])
+        end
+    end
+
+    data = zeros(length(complete_frame_index),frame_len)
+    datatime = (complete_frame_index .- 1) / Fs2
+
+    for i = 1:length(complete_frame_index)
+        data[i,:] = y_demod[complete_frame_index[i] : complete_frame_index[i]+frame_len-1]
     end
 
     # channel A and B
     channels = (view(data,:,259:2985), view(data,:,3380:6103))
-    #channels = (view(data,:,259:3185), view(data,:,3380:6103))
     return datatime,channels,data
 end
 
