@@ -52,6 +52,18 @@ function georeference(pngname,satellite_name,channel; starttime = DateTime(1,1,1
 end
 
 
+function get_tle(satellite_type)
+    @assert satellite_type == :weather
+    # get satellite orbit information (TLE)
+
+    @RemoteFile(tle_data,
+                "https://www.celestrak.com/NORAD/elements/weather.txt",
+                updates=:daily)
+    download(tle_data)
+
+    tles = read_tle(path(tle_data))
+end
+
 """
     plon,plat,data = georeference(pngname,satellite_name,channel)
 
@@ -70,14 +82,9 @@ pngname = "gqrx_20190811_075102_137620000.png";
 APTDecoder.georeference(pngname,satellite_name)
 ```
 """
-function georeference(data,satellite_name,datatime,starttime)
+function georeference(data,satellite_name,datatime,starttime;
+                      tles = get_tle(:weather))
 
-    # get satellite orbit information (TLE)
-    fname = "weather.txt"
-    if !isfile(fname)
-        download("https://www.celestrak.com/NORAD/elements/weather.txt",fname)
-    end
-    tles = read_tle(fname)
     tle = [t for t in tles if t.name == satellite_name][1]
 
     # Earth radius
