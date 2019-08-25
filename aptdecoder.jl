@@ -1,6 +1,7 @@
 #!/usr/bin/env julia
 
 using ArgParse
+using Images
 using FileIO
 using Statistics
 import APTDecoder

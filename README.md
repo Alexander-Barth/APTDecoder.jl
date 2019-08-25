@@ -7,8 +7,8 @@ Record the signal using a software like GQRX (https://noaa-apt.mbernardi.com.ar/
 
 ## Install
 
-* install [Julia](https://julialang.org/downloads/)
-* Launch julia an run:
+* Install [Julia](https://julialang.org/downloads/)
+* Launch julia and run:
 
 ```julia
 import Pkg
@@ -27,7 +27,7 @@ This produces the following images:
 
 ![raw](examples/gqrx_20190825_182745_137620000_raw.png "raw")
 
-The is the raw data. Channel a is on the left and channel b on the right. Note that channel a is just switching the wave-length during the capture. In part of Europe the sun went already down.
+This is the raw data. Channel a is on the left and channel b on the right. Note that channel a is just switching the wave-length during the capture. In part of Europe the sun went already down.
 
 ![channel A](examples/gqrx_20190825_182745_137620000_channel_a.png "A")
 
