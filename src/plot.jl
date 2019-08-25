@@ -19,15 +19,17 @@ function makeplots(wavname,satellite_name;
         starttime = APTDecoder.starttimename(basename(wavname))
     end
 
-    @show starttime
-
-    y,Fs,nbits,opt = wavread(wavname)
+    y,Fs,nbits,opt = FileIO.load(wavname)
 
     datatime,(channelA,channelB),data = APTDecoder.decode(y,Fs)
 
     vmin,vmax = quantile(view(data,:),[qrange[1],qrange[2]])
     data[data .> vmax] .= vmax;
     data[data .< vmin] .= vmin;
+
+    # save raw image
+    rawname = prefix * "_raw.png"
+    FileIO.save(rawname, colorview(Gray, data[:,1:3:end]./maximum(data)))
 
     Alon,Alat,Adata = APTDecoder.georeference(channelA,satellite_name,datatime,starttime)
     figure("Channel A - geo")

@@ -85,11 +85,11 @@ Decode the APT image in a time series `y` defined at a frequency `Fs` (in Hz).
 
 # Example
 ```julia
-using WAV
+using FileIO
 using APTDecoder
 
 wavname = "gqrx_20190804_141523_137100000.wav"
-y,Fs,nbits,opt = wavread(wavname)
+y,Fs,nbits,opt = load(wavname)
 datatime,(channelA,channelB),data = APTDecode.decode(y,Fs)
 
 ```

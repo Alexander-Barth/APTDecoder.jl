@@ -1,21 +1,23 @@
+
+using Images
+using FileIO
 import APTDecoder
 import SatelliteToolbox
 using Statistics
 using PyPlot
-using WAV
 
 # file name as recorde by gqrx
-wavname = "gqrx_20190823_173900_137620000.wav"
+wavname = "gqrx_20190825_182745_137620000.wav"
 
 # name of the satellite, as used by www.celestrak.com
 satellite_name = "NOAA 15"
 
 # satellite orbit information (TLE)
 # https://en.wikipedia.org/wiki/Two-line_element_set
-tles = SatelliteToolbox.read_tle("weather-20190823.txt")
+tles = SatelliteToolbox.read_tle("weather-20190825.txt")
 
 # load the wav file
-y,Fs,nbits,opt = wavread(wavname)
+y,Fs,nbits,opt = FileIO.load(wavname)
 
 # decode to image
 datatime,(channelA,channelB),data = APTDecoder.decode(y,Fs)
@@ -23,6 +25,9 @@ datatime,(channelA,channelB),data = APTDecoder.decode(y,Fs)
 vmin,vmax = quantile(view(data,:),[0.01,0.99])
 data[data .> vmax] .= vmax;
 data[data .< vmin] .= vmin;
+
+rawname = replace(wavname,r".wav$" => "_raw.png")
+FileIO.save(rawname, colorview(Gray, data[:,1:3:end]./maximum(data)))
 
 figure("APTDecoder")
 cmap = "RdYlBu_r"

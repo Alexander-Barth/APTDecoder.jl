@@ -1,15 +1,18 @@
 module APTDecoder
 
+# must load first
+# https://github.com/JuliaIO/ImageMagick.jl/issues/142#issuecomment-433691895
+using Images
 using Printf
 using Dates
+using Statistics
 using LinearAlgebra
 using SatelliteToolbox
 using PyPlot
 using CodecZlib
 using RemoteFiles
 import DSP
-using Statistics
-using WAV
+using FileIO
 
 scans_per_seconds = 2
 
