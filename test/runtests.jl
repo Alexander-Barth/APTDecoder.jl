@@ -1,4 +1,6 @@
-using ImageMagick
+if Sys.islinux()
+    using ImageMagick
+end
 import APTDecoder
 using Test
 using SatelliteToolbox
