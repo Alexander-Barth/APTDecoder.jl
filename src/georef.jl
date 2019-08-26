@@ -105,7 +105,17 @@ function georeference(data,satellite_name,datatime,starttime;
     # compute satellite track
 
     orbp = init_orbit_propagator(Val{:sgp4}, tle);
-    jdnow = DatetoJD(starttime)
+    jdnow =
+        if Int == Int64:
+            DatetoJD(starttime)
+        else
+            DatetoJD(Int(Dates.year(starttime)),
+                     Int(Dates.month(starttime)),
+                     Int(Dates.day(starttime)),
+                     Int(Dates.hour(starttime)),
+                     Int(Dates.minute(starttime)),
+                     Int(Dates.second(starttime)))
+        end
 
     # time [s] from the orbit epoch
     # two extra time steps (at the beginning and end)
