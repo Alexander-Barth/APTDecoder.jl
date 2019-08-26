@@ -106,7 +106,7 @@ function georeference(data,satellite_name,datatime,starttime;
 
     orbp = init_orbit_propagator(Val{:sgp4}, tle);
     jdnow =
-        if Int == Int64:
+        if Int == Int64
             DatetoJD(starttime)
         else
             DatetoJD(Int(Dates.year(starttime)),
