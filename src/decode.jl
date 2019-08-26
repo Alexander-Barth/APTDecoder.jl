@@ -82,6 +82,9 @@ end
 
 Decode the APT image in a time series `y` defined at a frequency `Fs` (in Hz).
 `datatime` is the time in seconds counting from the beginning of the recording.
+`channelA` and `channelB` are arrays representing the data from the two
+different channels (A and B). `data` is raw data as an array including channel A and B,
+as well sync markers and telemetry.
 
 # Example
 ```julia

@@ -1,19 +1,7 @@
-using Documenter
-using APTDecoder
+using Documenter, APTDecoder
 
-makedocs(
-    format = Documenter.HTML(),
-    modules = [APTDecoder],
-    sitename = "APTDecoder",
-    pages = [
-        "index.md"]
-)
-
-# Documenter can also automatically deploy documentation to gh-pages.
-# See "Hosting Documentation" and deploydocs() in the Documenter manual
-# for more information.
+makedocs(modules = [APTDecoder], sitename = "APTDecoder.jl")
 
 deploydocs(
     repo = "github.com/Alexander-Barth/APTDecoder.jl.git",
-    target = "build"
 )

@@ -1,10 +1,15 @@
 """
     lon,lat,data = APTDecoder.landseamask(;resolution='l',grid=5)
 
+Load the land-sea-lake raster from basemap: 0 is ocean, 1 is land and 2 is lake.
+`grid` is the resolution in arc seconds and should be either 1.25, 2.5, 5 or 10.
+The parameter `resolution` should be either 'c','l','i','h' or 'f'.
 
-0 is ocean
-1 is land
-2 is lake
+The data is downloaded from:
+https://github.com/matplotlib/basemap/tree/master/lib/mpl_toolkits/basemap/data
+
+The data is originally from [GMT](http://gmt.soest.hawaii.edu/) and distributed under the terms of the
+[GPL licences](https://github.com/matplotlib/basemap/blob/a551c2361314670dc7d95143190d3d48ba750d20/LICENSE_data).
 
 ```julia
 using PyPlot
