@@ -2,6 +2,7 @@ module APTDecoder
 
 # must load first
 # https://github.com/JuliaIO/ImageMagick.jl/issues/142#issuecomment-433691895
+using ImageMagick
 using Images
 using Printf
 using Dates
