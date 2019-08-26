@@ -38,8 +38,13 @@ function find_sync(y_demod,sync_frame,frame_len)
     mindistance = (8*frame_len) ÷ 10
     maxdistance = (12*frame_len) ÷ 10
 
-    conv_sync = DSP.conv(y_demod,reverse(sync_frame));
+    conv_sync_full = DSP.conv(y_demod,reverse(sync_frame));
+
+    # skip first incomplete convolution
+    conv_sync = @view conv_sync_full[length(sync_frame):end]
+
     # overall strongest sync frame
+    # index0 marks the index of beginning the sync frame
     index0 = findmax(conv_sync)[2];
 
     # look for all sync frames after the strongest sync frame
@@ -61,7 +66,7 @@ function find_sync(y_demod,sync_frame,frame_len)
     end
 
     sync_frame_index = vcat(reverse(before_index),[index0],after_index)
-    return sync_frame_index .- (length(sync_frame) - 1)
+    return sync_frame_index
 end
 
 
