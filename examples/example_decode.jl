@@ -8,6 +8,7 @@ using PyPlot
 
 # file name as recorde by gqrx
 wavname = "gqrx_20190825_182745_137620000.wav"
+download("https://archive.org/download/gqrx_20190825_182745_137620000/gqrx_20190825_182745_137620000.wav",wavname)
 
 # name of the satellite, as used by www.celestrak.com
 satellite_name = "NOAA 15"

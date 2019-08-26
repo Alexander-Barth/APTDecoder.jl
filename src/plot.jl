@@ -7,6 +7,26 @@ function plot(plon,plat,data; cmap = "RdYlBu_r", coastlinecolor="darkgrey")
     return nothing
 end
 
+"""
+    makeplots(wavname,satellite_name)
+
+Decodes the APT signal in `wavname` as recorded by gqrx using
+wide FM-mono demodulation.
+The file name `wavname` should  have the followng structure:
+`string_date_time_frequency.wav` like `gqrx_20190811_075102_137620000.wav`.
+Date and time of the file name are in UTC (not local time). `satellite_name` is
+the name of the satellite (generally `"NOAA 15"`, `"NOAA 18"`, `"NOAA 19"`).
+
+# Example:
+
+```julia
+import APTDecoder
+
+wavname = "gqrx_20190825_182745_137620000.wav"
+APTDecoder.makeplots(wavname,"NOAA 15")
+```
+
+"""
 function makeplots(wavname,satellite_name;
                    starttime = nothing,
                    prefix = replace(wavname,r".wav$" => ""),
