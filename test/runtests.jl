@@ -1,10 +1,19 @@
 if Sys.islinux()
     using ImageMagick
 end
-import APTDecoder
+#import APTDecoder
 using Test
-using SatelliteToolbox
+#using SatelliteToolbox
+using RemoteFiles
 
+@testset "RemoteFiles" begin
+    @RemoteFile(testfile,"https://datacenter.iers.org/data/latestVersion/223_EOP_C04_14.62-NOW.IAU1980223.txt")
+    download(testfile)
+    @show path(testfile)
+    @test 1 == 1
+end
+
+#=
 @testset "decoding" begin
     datadir = joinpath(dirname(pathof(SatelliteToolbox)),"..","data")
     if !isdir(datadir)
@@ -70,3 +79,4 @@ end
     @test lato ≈ [-26.12155703039504,  37.76782079033356]
     @test lono ≈ [83.57732793979254,  89.93590456974810]
 end
+=#
