@@ -6,7 +6,7 @@
 [![documentation latest](https://img.shields.io/badge/docs-latest-blue.svg)](https://alexander-barth.github.io/APTDecoder.jl/latest/)
 
 
-All you need is a (relatively inexpensive) software-defined radio and antenna for 137 MHz (following for example these instructions [instructions](https://www.instructables.com/id/NOAA-Satellite-Signals-with-a-PVC-QFH-Antenna-and-/));
+All you need is a (relatively inexpensive) software-defined radio and antenna for 137 MHz (following for example these [instructions](https://www.instructables.com/id/NOAA-Satellite-Signals-with-a-PVC-QFH-Antenna-and-/)).
 
 Record the signal using a software like GQRX (https://noaa-apt.mbernardi.com.ar/guide.html). 
 
@@ -39,4 +39,16 @@ This is the raw data. Channel a is on the left and channel b on the right. Note 
 
 ![channel B](examples/gqrx_20190825_182745_137620000_channel_b.png "B")
 
+# Alternatives
 
+* [NOAA-APT](https://github.com/martinber/noaa-apt) with some [excellent documentation](https://noaa-apt.mbernardi.com.ar/guide.html)
+* [apt-decoder](https://github.com/zacstewart/apt-decoder)
+* [aptdec](https://github.com/csete/aptdec)
+* [DirectDemod](https://github.com/aerospaceresearch/DirectDemod)
+* [apt137](https://github.com/pietern/apt137)
+* [APT3000](https://github.com/ThatcherC/APT3000)
+* ...
+
+# Credits
+
+Many thanks to the authors of the [SatelliteToolbox.jl](https://github.com/JuliaSpace/SatelliteToolbox.jl) and the [DSP.jl](https://github.com/JuliaDSP/DSP.jl). These package used the predict the satellite orbit and to extract the APT signal.
