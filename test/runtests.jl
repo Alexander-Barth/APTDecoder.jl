@@ -1,3 +1,4 @@
+using ImageMagick
 import APTDecoder
 using Test
 
