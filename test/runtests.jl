@@ -1,8 +1,17 @@
 using ImageMagick
 import APTDecoder
 using Test
+using SatelliteToolbox
 
 @testset "decoding" begin
+    datadir = joinpath(dirname(pathof(SatelliteToolbox)),"..","data")
+    if !isdir(datadir)
+        mkpath(datadir)
+    end
+    if !isfile(joinpath(datadir,"EOP_IAU1980.TXT"))
+        cp(joinpath(dirname(pathof(APTDecoder)),"..","test","EOP_IAU1980.TXT"),joinpath(datadir,"EOP_IAU1980.TXT"))
+    end
+
     wavname = "gqrx_20190825_182745_137620000.wav"
     download("https://archive.org/download/gqrx_20190825_182745_137620000/gqrx_20190825_182745_137620000.wav",wavname)
     APTDecoder.makeplots(wavname,"NOAA 15")
