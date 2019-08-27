@@ -1,28 +1,11 @@
 if Sys.islinux()
     using ImageMagick
 end
-#import APTDecoder
+import APTDecoder
 using Test
-#using SatelliteToolbox
 using RemoteFiles
 
-@testset "RemoteFiles" begin
-    @RemoteFile(testfile,"https://datacenter.iers.org/data/latestVersion/223_EOP_C04_14.62-NOW.IAU1980223.txt")
-    download(testfile)
-    @show path(testfile)
-    @test 1 == 1
-end
-
-#=
 @testset "decoding" begin
-    datadir = joinpath(dirname(pathof(SatelliteToolbox)),"..","data")
-    if !isdir(datadir)
-        mkpath(datadir)
-    end
-    if !isfile(joinpath(datadir,"EOP_IAU1980.TXT"))
-        cp(joinpath(dirname(pathof(APTDecoder)),"..","test","EOP_IAU1980.TXT"),joinpath(datadir,"EOP_IAU1980.TXT"))
-    end
-
     wavname = "gqrx_20190825_182745_137620000.wav"
     download("https://archive.org/download/gqrx_20190825_182745_137620000/gqrx_20190825_182745_137620000.wav",wavname)
     APTDecoder.makeplots(wavname,"NOAA 15")
@@ -79,4 +62,3 @@ end
     @test lato ≈ [-26.12155703039504,  37.76782079033356]
     @test lono ≈ [83.57732793979254,  89.93590456974810]
 end
-=#
