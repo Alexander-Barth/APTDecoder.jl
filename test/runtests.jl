@@ -25,6 +25,16 @@ using RemoteFiles
 
     tt = APTDecoder.mark_sync(y_demod,sync_frame,frame_len);
     @test tt[ioffset+1,1] ≈ 1.
+
+    @test_throws ErrorException APTDecoder.starttimename("bogous_filename.wav")
+
+    pngname = joinpath(dirname(@__FILE__),"gqrx_20190825_182745_137620000.png")
+    datatime,channel,data = APTDecoder.wxload(pngname)
+    @test length(channel) == 2
+
+    satellite_name = "NOAA 15"
+    channel = 'a'
+    plon,plat,data = APTDecoder.georeference(pngname,satellite_name,channel)
 end
 
 @testset "landseamask" begin
