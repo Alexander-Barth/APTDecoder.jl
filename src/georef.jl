@@ -42,8 +42,6 @@ function georeference(pngname,satellite_name,channel; starttime = DateTime(1,1,1
             data_all[:,1123:2027];
         end
 
-    @show size(data)
-
     data = data[end:-1:1,end:-1:1]
     datatime = (0:size(data,1)-1)/scans_per_seconds
 
