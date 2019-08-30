@@ -50,4 +50,4 @@ This is the raw data. Channel a is on the left and channel b on the right. Note 
 
 # Credits
 
-Many thanks to the authors of the [SatelliteToolbox.jl](https://github.com/JuliaSpace/SatelliteToolbox.jl) and the [DSP.jl](https://github.com/JuliaDSP/DSP.jl). These package used the predict the satellite orbit and to extract the APT signal.
+Many thanks to the authors of the [SatelliteToolbox.jl](https://github.com/JuliaSpace/SatelliteToolbox.jl) and the [DSP.jl](https://github.com/JuliaDSP/DSP.jl). These packages are used to predict the satellite orbit and to extract the APT signal.
