@@ -35,6 +35,11 @@ using RemoteFiles
     satellite_name = "NOAA 15"
     channel = 'a'
     plon,plat,data = APTDecoder.georeference(pngname,satellite_name,channel)
+
+
+    satellite_name = "NOAA 15"
+    channel = 'x' # bogous
+    @test_throws ErrorException APTDecoder.georeference(pngname,satellite_name,channel)
 end
 
 @testset "landseamask" begin
