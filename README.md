@@ -33,7 +33,7 @@ This produces the following images:
 
 ![raw](examples/gqrx_20190825_182745_137620000_raw.png "raw")
 
-This is the raw data. Channel a is on the right and channel b on the left. Note that channel a is just switching the wave-length during the capture. In part of Europe the sun went already down.
+This is the raw data. Channel a is on the right and channel b on the left. Note that channel b is just switching the wave-length during the capture. In part of Europe the sun went already down.
 
 ![channel A](examples/gqrx_20190825_182745_137620000_channel_a.png "A")
 
