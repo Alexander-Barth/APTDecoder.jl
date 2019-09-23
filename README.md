@@ -13,7 +13,7 @@ The data is first recorded using a software like GQRX (https://noaa-apt.mbernard
 ## Installation of APDDecoder.jl
 
 * Install [julia](https://julialang.org/downloads/)
-* Launch julia and run:
+* Launch julia and run to following commands to install `APTDecoder`:
 
 ```julia
 import Pkg
@@ -26,6 +26,7 @@ Pkg.develop(PackageSpec(url="https://github.com/Alexander-Barth/APTDecoder.jl"))
 import APTDecoder
 APTDecoder.makeplots("gqrx_20190825_182745_137620000.wav","NOAA 15")
 ```
+The first argument of `APTDecoder.makeplots` is the wav file which should include the date and time in UTC (which is the default for GQRX) and the name of the satellite, e.g. "NOAA 15", "NOAA 18" or "NOAA 19".
 
 This produces the following images:
 
