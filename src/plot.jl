@@ -48,16 +48,22 @@ function makeplots(wavname,satellite_name;
     data[data .< vmin] .= vmin;
 
     # save raw image
-    rawname = prefix * "_raw.png"
-    FileIO.save(rawname, colorview(Gray, data[:,1:3:end]./maximum(data)))
+    imagenames = (
+        rawname = prefix * "_raw.png",
+        channel_a = prefix * "_channel_a.png",
+        channel_b = prefix * "_channel_a.png")
+
+    FileIO.save(imagenames.rawname, colorview(Gray, data[:,1:3:end]./maximum(data)))
 
     Alon,Alat,Adata = APTDecoder.georeference(channelA,satellite_name,datatime,starttime)
     figure("Channel A - geo")
     APTDecoder.plot(Alon,Alat,Adata; coastlinecolor=coastlinecolor, cmap=cmap)
-    savefig(prefix * "_channel_a.png",dpi=dpi)
+    savefig(imagenames.channel_a,dpi=dpi)
 
     Blon,Blat,Bdata = APTDecoder.georeference(channelB,satellite_name,datatime,starttime)
     figure("Channel B - geo")
     APTDecoder.plot(Blon,Blat,Bdata; coastlinecolor=coastlinecolor, cmap=cmap)
-    savefig(prefix * "_channel_b.png",dpi=dpi)
+    savefig(imagenames.channel_b,dpi=dpi)
+
+    return imagenames
 end
