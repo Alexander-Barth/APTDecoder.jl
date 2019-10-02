@@ -1,4 +1,4 @@
 *~
 *.cov
 Manifest.toml
-example/APTDecoder.toml
+examples/APTDecoder.toml
