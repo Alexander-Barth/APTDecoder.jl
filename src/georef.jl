@@ -107,6 +107,7 @@ function georeference(data,satellite_name,datatime,starttime;
         if Int == Int64
             DatetoJD(starttime)
         else
+            # issue on 32-bit machines
             DatetoJD(Int(Dates.year(starttime)),
                      Int(Dates.month(starttime)),
                      Int(Dates.day(starttime)),
