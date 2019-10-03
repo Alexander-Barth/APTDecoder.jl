@@ -2,6 +2,8 @@ using ImageMagick
 using APTDecoder
 using SatelliteToolbox
 using Dates
+using Base64
+using JSON
 using Twitter
 import APTDecoder
 using Pkg
@@ -58,7 +60,7 @@ function publish(auth,message,fnames)
     Twitter.post_status_update(
         status = message,
         media_ids =
-          [twitter_upload(auth,fname) for fname in fnames])
+          join([twitter_upload(auth,fname) for fname in fnames],","))
 end
 
 # time frame of selected passes
@@ -125,7 +127,7 @@ for i = 1:size(pass_time,1)
         pass_satellite_name[i] = "NOAA 15"
 
         @info("Making plots")
-        imagenames = APTDecoder.makeplots(wavname,pass_satellite_name[i])
+        imagenames = APTDecoder.makeplots(wavname,pass_satellite_name[i]; eop = eop_IAU1980)
 
         if i < 3
             message = "$(pass_satellite_name[i]) $(Dates.format(dt,"yyyymmdd"))_$(Dates.format(dt,"HHMMSS"))"

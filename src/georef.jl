@@ -81,6 +81,7 @@ APTDecoder.georeference(pngname,satellite_name)
 ```
 """
 function georeference(data,satellite_name,datatime,starttime;
+                      eop = nothing,
                       tles = get_tle(:weather))
 
     tle = [t for t in tles if t.name == satellite_name][1]
@@ -127,7 +128,7 @@ function georeference(data,satellite_name,datatime,starttime;
     o,r_TEME,v_TEME = propagate!(orbp, t);
 
     # download the Earth Orientation Parameters (EOP)
-    eop_IAU1980 = get_iers_eop();
+    eop_IAU1980 = (eop == nothing ? get_iers_eop() : eop)
 
     α = range(-swath/2,stop=swath/2,length = np) # degrees
 
