@@ -6,11 +6,12 @@ using Base64
 using JSON
 using Twitter
 import APTDecoder
-using Pkg
-const TOML = Pkg.TOML
+#using Pkg
+#const TOML = Pkg.TOML
 
 tles = APTDecoder.get_tle(:weather)
-config = TOML.parsefile("APTDecoder.toml")
+#config = TOML.parsefile("APTDecoder.toml")
+config = JSON.parsefile("APTDecoder.json")
 
 satellites = Dict(
     "NOAA 19" => (frequency = 137_100_000,
@@ -52,7 +53,7 @@ function twitter_upload(auth,fname)
     media = read(fname)
     r = Twitter.post_oauth("https://upload.twitter.com/1.1/media/upload.json",Dict("media" => base64encode(media)))
     resp = JSON.parse(String(r.body))
-    return resp["media_id"]
+    return resp["media_id_string"]
 end
 
 function publish(auth,message,fnames)
@@ -122,7 +123,7 @@ for i = 1:size(pass_time,1)
         println("Finish recording\n")
 
         # debug
-        wavname_example = "/home/abarth/src/APTDecoder/examples/gqrx_20190823_173900_137620000.wav"
+        wavname_example = joinpath(dirname(pathof(APTDecoder)),"..","examples","gqrx_20190823_173900_137620000.wav")
         cp(wavname_example,wavname,force=true)
         pass_satellite_name[i] = "NOAA 15"
 
