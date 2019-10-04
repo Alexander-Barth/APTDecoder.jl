@@ -52,7 +52,7 @@ function makeplots(wavname,satellite_name;
     imagenames = (
         rawname = prefix * "_raw.png",
         channel_a = prefix * "_channel_a.png",
-        channel_b = prefix * "_channel_a.png")
+        channel_b = prefix * "_channel_b.png")
 
     FileIO.save(imagenames.rawname, colorview(Gray, data[:,1:3:end]./maximum(data)))
 
