@@ -116,9 +116,8 @@ function process(config,tles,eop_IAU1980,t0)
             frequency = satellites[pass_satellite_name[i]].frequency
 
             wavname = joinpath(outdir,"APTDecoder_$(Dates.format(dt,"yyyymmdd"))_$(Dates.format(dt,"HHMMSS"))_$(frequency).wav")
-            println("start recording $(pass_satellite_name[i]) to file $wavname")
+            @info("start recording $(pass_satellite_name[i]) to file $wavname")
 
-            #=
             # satellite is still in the sky
             record = run(pipeline(`rtl_fm -M wbfm -f 88.5e6 -E wav`, `sox -t raw -e signed -c 1 -b 16 -r 32k - $wavname`), wait = false);
             println("Recording during ",pass_duration)
@@ -126,7 +125,6 @@ function process(config,tles,eop_IAU1980,t0)
             kill.(record.processes,Base.SIGINT)
 
             println("Finish recording\n")
-            =#
 
             # debug
             wavname_example = joinpath(dirname(pathof(APTDecoder)),"..","examples","gqrx_20190823_173900_137620000.wav")
@@ -135,7 +133,7 @@ function process(config,tles,eop_IAU1980,t0)
 	        @show length(read(wavname))
             pass_satellite_name[i] = "NOAA 15"
 
-            @info("Making plots")
+            @println("Making plots")
 	        @show wavname,pass_satellite_name[i]
             imagenames = APTDecoder.makeplots(wavname,pass_satellite_name[i]; eop = eop_IAU1980)
             close("all")
