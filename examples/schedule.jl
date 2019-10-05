@@ -6,14 +6,20 @@ using Base64
 using JSON
 using Twitter
 import APTDecoder
+using PyPlot
+
+plt.ioff()
 #using Pkg
 #const TOML = Pkg.TOML
 
-tles = APTDecoder.get_tle(:weather)
 #config = TOML.parsefile("APTDecoder.toml")
 config = JSON.parsefile("APTDecoder.json")
 
-satellites = Dict(
+tles = APTDecoder.get_tle(:weather)
+
+eop_IAU1980 = get_iers_eop();
+
+const satellites = Dict(
     "NOAA 19" => (frequency = 137_100_000,
                   protocol = :APT),
     "NOAA 18" => (frequency = 137_912_500,
@@ -21,17 +27,6 @@ satellites = Dict(
     "NOAA 15" => (frequency = 137_620_000,
                   protocol = :APT)
 )
-
-
-ground_station = (
-    config["ground_station"]["latitude"],
-    config["ground_station"]["longitude"],
-    config["ground_station"]["altitude"])
-
-basedir = config["basedir"]
-mkpath(basedir)
-
-eop_IAU1980 = get_iers_eop();
 
 function get_tle(satellite_name,tles = APTDecoder.get_tle(:weather))
     return [t for t in tles if t.name == satellite_name][1]
@@ -61,87 +56,102 @@ function publish(auth,message,fnames)
     Twitter.post_status_update(
         status = message,
         media_ids =
-          join([twitter_upload(auth,fname) for fname in fnames],","))
+        join([twitter_upload(auth,fname) for fname in fnames],","))
 end
 
+function process(config,tles,eop_IAU1980,t0)
+
+    ground_station = (
+        config["ground_station"]["latitude"],
+        config["ground_station"]["longitude"],
+        config["ground_station"]["altitude"])
+
+    basedir = config["basedir"]
+    mkpath(basedir)
+
+    t1 = t0 + Dates.Day(1)
+
+    outdir = joinpath(basedir,Dates.format(t0,"yyyy-mm-dd"))
+    mkpath(outdir)
+
+    pass_satellite_name = String[]
+    pass_time = Matrix{DateTime}(undef,0,2)
+
+    for satellite_name in keys(satellites)
+        tle = get_tle(satellite_name)
+        out = sat_time(eop_IAU1980,ground_station,tle,t0,t1)
+
+        append!(pass_satellite_name,fill(satellite_name,size(out,1)))
+        pass_time = vcat(pass_time,out)
+    end
+
+    ind = sortperm(pass_time[:,1])
+    pass_time = pass_time[ind,:]
+    pass_satellite_name = pass_satellite_name[ind]
+
+
+    for i = 1:size(pass_time,1)
+        pass_duration = Dates.value(pass_time[i,2] - pass_time[i,1])/1000
+        println("$(pass_satellite_name[i]): $(pass_time[i,1]) → $(pass_time[i,2])  $(round(pass_duration/60,digits=1)) min")
+    end
+
+    for i = 1:size(pass_time,1)
+        sleep_time = pass_time[i,1] - Dates.now(Dates.UTC)
+        # debug
+        sleep_time = Dates.Second(1)
+
+        if sleep_time > Dates.Millisecond(0)
+            println("wait upto $(pass_time[i,1]) $sleep_time ")
+            sleep(sleep_time)
+        end
+
+        if Dates.now(Dates.UTC) < pass_time[i,2]
+            dt = Dates.now(Dates.UTC)
+            println("Now $(dt) and should be $(pass_time[i,1])")
+            pass_duration = pass_time[i,2] - dt
+            # debug
+            pass_duration = Dates.Second(10)
+            frequency = satellites[pass_satellite_name[i]].frequency
+
+            wavname = joinpath(outdir,"APTDecoder_$(Dates.format(dt,"yyyymmdd"))_$(Dates.format(dt,"HHMMSS"))_$(frequency).wav")
+            println("start recording $(pass_satellite_name[i]) to file $wavname")
+
+            #=
+            # satellite is still in the sky
+            record = run(pipeline(`rtl_fm -M wbfm -f 88.5e6 -E wav`, `sox -t raw -e signed -c 1 -b 16 -r 32k - $wavname`), wait = false);
+            println("Recording during ",pass_duration)
+            sleep(pass_duration)
+            kill.(record.processes,Base.SIGINT)
+
+            println("Finish recording\n")
+            =#
+
+            # debug
+            wavname_example = joinpath(dirname(pathof(APTDecoder)),"..","examples","gqrx_20190823_173900_137620000.wav")
+	        @show length(read(wavname_example))
+            cp(wavname_example,wavname,force=true)
+	        @show length(read(wavname))
+            pass_satellite_name[i] = "NOAA 15"
+
+            @info("Making plots")
+	        @show wavname,pass_satellite_name[i]
+            imagenames = APTDecoder.makeplots(wavname,pass_satellite_name[i]; eop = eop_IAU1980)
+            close("all")
+
+            if i < 3
+                #message = "$(pass_satellite_name[i]) $(Dates.format(dt,"yyyymmdd"))_$(Dates.format(dt,"HHMMSS"))"
+                #publish(config["twitter"],message,[imagenames.rawname,imagenames.channel_a,imagenames.channel_b])
+            end
+        end
+
+        GC.gc()
+    end
+
+end
+
+if isdir("/tmp/APTDecoder")
+    run(`rm -R /tmp/APTDecoder/`)
+end
 # time frame of selected passes
 t0 = Dates.now(Dates.UTC);
-t1 = t0 + Dates.Day(1)
-
-outdir = joinpath(basedir,Dates.format(t0,"yyyy-mm-dd"))
-mkpath(outdir)
-
-pass_satellite_name = String[]
-pass_time = Matrix{DateTime}(undef,0,2)
-
-for satellite_name in keys(satellites)
-    global pass_time
-    tle = get_tle(satellite_name)
-    out = sat_time(eop_IAU1980,ground_station,tle,t0,t1)
-
-    append!(pass_satellite_name,fill(satellite_name,size(out,1)))
-    pass_time = vcat(pass_time,out)
-end
-
-ind = sortperm(pass_time[:,1])
-pass_time = pass_time[ind,:]
-pass_satellite_name = pass_satellite_name[ind]
-
-
-for i = 1:size(pass_time,1)
-    pass_duration = Dates.value(pass_time[i,2] - pass_time[i,1])/1000
-    println("$(pass_satellite_name[i]): $(pass_time[i,1]) → $(pass_time[i,2])  $(round(pass_duration/60,digits=1)) min")
-end
-
-for i = 1:size(pass_time,1)
-    sleep_time = pass_time[i,1] - Dates.now(Dates.UTC)
-    # debug
-    sleep_time = Dates.Second(1)
-
-    if sleep_time > Dates.Millisecond(0)
-        println("wait upto $(pass_time[i,1]) $sleep_time ")
-        sleep(sleep_time)
-    end
-
-    if Dates.now(Dates.UTC) < pass_time[i,2]
-        dt = Dates.now(Dates.UTC)
-        println("Now $(dt) and should be $(pass_time[i,1])")
-        pass_duration = pass_time[i,2] - dt
-        # debug
-        pass_duration = Dates.Second(10)
-        frequency = satellites[pass_satellite_name[i]].frequency
-
-        wavname = joinpath(outdir,"APTDecoder_$(Dates.format(dt,"yyyymmdd"))_$(Dates.format(dt,"HHMMSS"))_$(frequency).wav")
-        println("start recording $(pass_satellite_name[i]) to file $wavname")
-
-        # satellite is still in the sky
-        record = run(pipeline(`rtl_fm -M wbfm -f 88.5e6 -E wav`, `sox -t raw -e signed -c 1 -b 16 -r 32k - $wavname`), wait = false);
-        println("Recording during ",pass_duration)
-        sleep(pass_duration)
-        kill.(record.processes,Base.SIGINT)
-
-        println("Finish recording\n")
-
-        # debug
-        wavname_example = joinpath(dirname(pathof(APTDecoder)),"..","examples","gqrx_20190823_173900_137620000.wav")
-	@show length(read(wavname_example))
-        cp(wavname_example,wavname,force=true)
-	run(`sync`)
-	sleep(3)
-	@show length(read(wavname))
-        pass_satellite_name[i] = "NOAA 15"
-
-        @info("Making plots")
-	@show wavname,pass_satellite_name[i]
-        imagenames = APTDecoder.makeplots(wavname,pass_satellite_name[i]; eop = eop_IAU1980)
-
-        if i < 3
-            message = "$(pass_satellite_name[i]) $(Dates.format(dt,"yyyymmdd"))_$(Dates.format(dt,"HHMMSS"))"
-            publish(config["twitter"],message,[imagenames.rawname,imagenames.channel_a,imagenames.channel_b])
-        end
-    end
-
-    GC.gc()
-end
-
-
+process(config,tles,eop_IAU1980,t0)
