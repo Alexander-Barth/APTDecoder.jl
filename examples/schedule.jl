@@ -124,10 +124,15 @@ for i = 1:size(pass_time,1)
 
         # debug
         wavname_example = joinpath(dirname(pathof(APTDecoder)),"..","examples","gqrx_20190823_173900_137620000.wav")
+	@show length(read(wavname_example))
         cp(wavname_example,wavname,force=true)
+	run(`sync`)
+	sleep(3)
+	@show length(read(wavname))
         pass_satellite_name[i] = "NOAA 15"
 
         @info("Making plots")
+	@show wavname,pass_satellite_name[i]
         imagenames = APTDecoder.makeplots(wavname,pass_satellite_name[i]; eop = eop_IAU1980)
 
         if i < 3
@@ -135,6 +140,8 @@ for i = 1:size(pass_time,1)
             publish(config["twitter"],message,[imagenames.rawname,imagenames.channel_a,imagenames.channel_b])
         end
     end
+
+    GC.gc()
 end
 
 
