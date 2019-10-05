@@ -7,6 +7,7 @@ using JSON
 using Twitter
 import APTDecoder
 using PyPlot
+using PyCall
 
 plt.ioff()
 #using Pkg
@@ -60,6 +61,7 @@ function publish(auth,message,fnames)
 end
 
 function process(config,tles,eop_IAU1980,t0)
+    pygc = PyCall.pyimport("gc")
 
     ground_station = (
         config["ground_station"]["latitude"],
@@ -144,7 +146,7 @@ function process(config,tles,eop_IAU1980,t0)
             end
         end
 
-        GC.gc()
+        pygc.collect()
     end
 
 end
