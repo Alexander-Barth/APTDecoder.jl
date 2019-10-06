@@ -1,4 +1,4 @@
-using ImageMagick
+    using ImageMagick
 using APTDecoder
 using SatelliteToolbox
 using Dates
@@ -100,10 +100,10 @@ function process(config,tles,eop_IAU1980,t0; debug = false)
     for i = 1:size(pass_time,1)
         sleep_time = pass_time[i,1] - Dates.now(Dates.UTC)
         # debug
-	if debug
-           sleep_time = Dates.Second(1)
-	end
-	
+	    if debug
+            sleep_time = Dates.Second(1)
+	    end
+
         if sleep_time > Dates.Millisecond(0)
             println("wait upto $(pass_time[i,1]) $sleep_time ")
             sleep(sleep_time)
@@ -114,17 +114,17 @@ function process(config,tles,eop_IAU1980,t0; debug = false)
             println("Now $(dt) and should be $(pass_time[i,1])")
             pass_duration = pass_time[i,2] - dt
             # debug
-	    if debug
-	       pass_duration = Dates.Second(10)
-	    end
+	        if debug
+	            pass_duration = Dates.Second(10)
+	        end
             frequency = satellites[pass_satellite_name[i]].frequency
 
             wavname = joinpath(outdir,"APTDecoder_$(Dates.format(dt,"yyyymmdd"))_$(Dates.format(dt,"HHMMSS"))_$(frequency).wav")
             @info("start recording $(pass_satellite_name[i]) to file $wavname")
 
             # satellite is still in the sky
-	    record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 - `,`sox -t wav - $wavname rate 11025`), wait = false);
-	    # get FM radio for debugging
+	        record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 - `,`sox -t wav - $wavname rate 11025`), wait = false);
+	        # get FM radio for debugging
             #record = run(pipeline(`rtl_fm -M wbfm -f 88.5e6 -E wav`, `sox -t raw -e signed -c 1 -b 16 -r 32k - $wavname`), wait = false);
             println("Recording during ",pass_duration)
             sleep(pass_duration)
@@ -133,20 +133,20 @@ function process(config,tles,eop_IAU1980,t0; debug = false)
             println("Finish recording\n")
 
             # debug
-	    if debug
-              wavname_example = joinpath(dirname(pathof(APTDecoder)),"..","examples","gqrx_20190823_173900_137620000.wav")
-              cp(wavname_example,wavname,force=true)
-              pass_satellite_name[i] = "NOAA 15"
-	    end
-	    
+	        if debug
+                wavname_example = joinpath(dirname(pathof(APTDecoder)),"..","examples","gqrx_20190823_173900_137620000.wav")
+                cp(wavname_example,wavname,force=true)
+                pass_satellite_name[i] = "NOAA 15"
+	        end
+
             println("Making plots")
-	    @show wavname,pass_satellite_name[i]
+	        @show wavname,pass_satellite_name[i]
             imagenames = APTDecoder.makeplots(wavname,pass_satellite_name[i]; eop = eop_IAU1980)
             close("all")
 
             #if i < 3
-                message = "$(pass_satellite_name[i]) $(Dates.format(dt,"yyyymmdd"))_$(Dates.format(dt,"HHMMSS"))"
-                publish(config["twitter"],message,[imagenames.rawname,imagenames.channel_a,imagenames.channel_b])
+            message = "$(pass_satellite_name[i]) $(Dates.format(dt,"yyyymmdd"))_$(Dates.format(dt,"HHMMSS"))"
+            publish(config["twitter"],message,[imagenames.rawname,imagenames.channel_a,imagenames.channel_b])
             #end
         end
 
