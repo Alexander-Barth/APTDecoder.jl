@@ -60,7 +60,7 @@ function publish(auth,message,fnames)
         join([twitter_upload(auth,fname) for fname in fnames],","))
 end
 
-function process(config,tles,eop_IAU1980,t0)
+function process(config,tles,eop_IAU1980,t0; debug = false)
     pygc = PyCall.pyimport("gc")
 
     ground_station = (
@@ -100,8 +100,10 @@ function process(config,tles,eop_IAU1980,t0)
     for i = 1:size(pass_time,1)
         sleep_time = pass_time[i,1] - Dates.now(Dates.UTC)
         # debug
-        sleep_time = Dates.Second(1)
-
+	if debug
+           sleep_time = Dates.Second(1)
+	end
+	
         if sleep_time > Dates.Millisecond(0)
             println("wait upto $(pass_time[i,1]) $sleep_time ")
             sleep(sleep_time)
@@ -112,14 +114,18 @@ function process(config,tles,eop_IAU1980,t0)
             println("Now $(dt) and should be $(pass_time[i,1])")
             pass_duration = pass_time[i,2] - dt
             # debug
-            pass_duration = Dates.Second(10)
+	    if debug
+	       pass_duration = Dates.Second(10)
+	    end
             frequency = satellites[pass_satellite_name[i]].frequency
 
             wavname = joinpath(outdir,"APTDecoder_$(Dates.format(dt,"yyyymmdd"))_$(Dates.format(dt,"HHMMSS"))_$(frequency).wav")
             @info("start recording $(pass_satellite_name[i]) to file $wavname")
 
             # satellite is still in the sky
-            record = run(pipeline(`rtl_fm -M wbfm -f 88.5e6 -E wav`, `sox -t raw -e signed -c 1 -b 16 -r 32k - $wavname`), wait = false);
+	    record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 - `,`sox -t wav - $wavname rate 11025`), wait = false);
+	    # get FM radio for debugging
+            #record = run(pipeline(`rtl_fm -M wbfm -f 88.5e6 -E wav`, `sox -t raw -e signed -c 1 -b 16 -r 32k - $wavname`), wait = false);
             println("Recording during ",pass_duration)
             sleep(pass_duration)
             kill.(record.processes,Base.SIGINT)
@@ -127,21 +133,21 @@ function process(config,tles,eop_IAU1980,t0)
             println("Finish recording\n")
 
             # debug
-            wavname_example = joinpath(dirname(pathof(APTDecoder)),"..","examples","gqrx_20190823_173900_137620000.wav")
-	        @show length(read(wavname_example))
-            cp(wavname_example,wavname,force=true)
-	        @show length(read(wavname))
-            pass_satellite_name[i] = "NOAA 15"
-
-            @println("Making plots")
-	        @show wavname,pass_satellite_name[i]
+	    if debug
+              wavname_example = joinpath(dirname(pathof(APTDecoder)),"..","examples","gqrx_20190823_173900_137620000.wav")
+              cp(wavname_example,wavname,force=true)
+              pass_satellite_name[i] = "NOAA 15"
+	    end
+	    
+            println("Making plots")
+	    @show wavname,pass_satellite_name[i]
             imagenames = APTDecoder.makeplots(wavname,pass_satellite_name[i]; eop = eop_IAU1980)
             close("all")
 
-            if i < 3
-                #message = "$(pass_satellite_name[i]) $(Dates.format(dt,"yyyymmdd"))_$(Dates.format(dt,"HHMMSS"))"
-                #publish(config["twitter"],message,[imagenames.rawname,imagenames.channel_a,imagenames.channel_b])
-            end
+            #if i < 3
+                message = "$(pass_satellite_name[i]) $(Dates.format(dt,"yyyymmdd"))_$(Dates.format(dt,"HHMMSS"))"
+                publish(config["twitter"],message,[imagenames.rawname,imagenames.channel_a,imagenames.channel_b])
+            #end
         end
 
         pygc.collect()
@@ -149,9 +155,9 @@ function process(config,tles,eop_IAU1980,t0)
 
 end
 
-if isdir("/tmp/APTDecoder")
-    run(`rm -R /tmp/APTDecoder/`)
-end
+#if isdir("/tmp/APTDecoder")
+#    run(`rm -R /tmp/APTDecoder/`)
+#end
 # time frame of selected passes
 t0 = Dates.now(Dates.UTC);
 process(config,tles,eop_IAU1980,t0)
