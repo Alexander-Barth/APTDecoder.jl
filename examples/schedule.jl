@@ -1,4 +1,6 @@
-    using ImageMagick
+
+
+using ImageMagick
 using APTDecoder
 using SatelliteToolbox
 using Dates
@@ -8,6 +10,7 @@ using Twitter
 import APTDecoder
 using PyPlot
 using PyCall
+
 
 plt.ioff()
 #using Pkg
@@ -20,6 +23,7 @@ tles = APTDecoder.get_tle(:weather)
 
 eop_IAU1980 = get_iers_eop();
 
+
 const satellites = Dict(
     "NOAA 19" => (frequency = 137_100_000,
                   protocol = :APT),
@@ -28,6 +32,9 @@ const satellites = Dict(
     "NOAA 15" => (frequency = 137_620_000,
                   protocol = :APT)
 )
+
+
+lt(dt::DateTime) = astimezone(ZonedDateTime(dt,tz"UTC"),localzone())
 
 function get_tle(satellite_name,tles = APTDecoder.get_tle(:weather))
     return [t for t in tles if t.name == satellite_name][1]
@@ -61,7 +68,7 @@ function publish(auth,message,fnames)
         join([twitter_upload(auth,fname) for fname in fnames],","))
 end
 
-function process(config,tles,eop_IAU1980,t0; debug = false)
+function process(config,tles,eop_IAU1980,t0; debug = false, tz_offset = Dates.Hour(2))
     pygc = PyCall.pyimport("gc")
 
     ground_station = (
@@ -95,7 +102,7 @@ function process(config,tles,eop_IAU1980,t0; debug = false)
 
     for i = 1:size(pass_time,1)
         pass_duration = Dates.value(pass_time[i,2] - pass_time[i,1])/1000
-        println("$(pass_satellite_name[i]): $(pass_time[i,1]) → $(pass_time[i,2])  $(round(pass_duration/60,digits=1)) min")
+        println("$(pass_satellite_name[i]): $(lt(pass_time[i,1])) → $(lt(pass_time[i,2]))  $(round(pass_duration/60,digits=1)) min")
     end
 
     for i = 1:size(pass_time,1)
@@ -106,13 +113,13 @@ function process(config,tles,eop_IAU1980,t0; debug = false)
 	    end
 
         if sleep_time > Dates.Millisecond(0)
-            println("wait upto $(pass_time[i,1]) $sleep_time ")
+            println("wait upto $(lt(pass_time[i,1])) $sleep_time ")
             sleep(sleep_time)
         end
 
         if Dates.now(Dates.UTC) < pass_time[i,2]
             dt = Dates.now(Dates.UTC)
-            println("Now $(dt) and should be $(pass_time[i,1])")
+            println("Now $(lt(dt)) and should be $(lt(pass_time[i,1]))")
             pass_duration = pass_time[i,2] - dt
             # debug
 	        if debug
