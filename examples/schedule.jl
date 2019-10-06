@@ -35,12 +35,13 @@ end
 
 function sat_time(eop_IAU1980,ground_station,tle,t0,t1)
     orbp = init_orbit_propagator(Val{:sgp4}, tle)
-    ground_station_rad = (ground_station[1] * pi/180,ground_station[2] * pi/180 ,150)
+    ground_station_rad = (ground_station[2] * pi/180,ground_station[1] * pi/180 ,ground_station[3])
     # predict for the next 3 days since epoch of the satellite
     Δt = 24*60*60*3
     out = ground_station_accesses(orbp, ground_station_rad,Δt,TEME(),ITRF(),eop_IAU1980; θ = 10*pi/180)
     # keep only time between t0 and t1
     sel = (t0 .<= out[:,1]) .& (out[:,2] .< t1)
+    @show tle.name, out
     out = out[sel,:]
     return out
 end
@@ -123,7 +124,9 @@ function process(config,tles,eop_IAU1980,t0; debug = false)
             @info("start recording $(pass_satellite_name[i]) to file $wavname")
 
             # satellite is still in the sky
-	        record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 - `,`sox -t wav - $wavname rate 11025`), wait = false);
+            record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 -`,`sox -t raw -r 60000 -e signed -b 32 - $(wavname)`), wait = false);
+
+	        #record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 - `,`sox -t wav - $wavname rate 11025`), wait = false);
 	        # get FM radio for debugging
             #record = run(pipeline(`rtl_fm -M wbfm -f 88.5e6 -E wav`, `sox -t raw -e signed -c 1 -b 16 -r 32k - $wavname`), wait = false);
             println("Recording during ",pass_duration)
