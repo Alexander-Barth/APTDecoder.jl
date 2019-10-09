@@ -113,7 +113,7 @@ function process(config,tles,eop_IAU1980,t0; debug = false, tz_offset = Dates.Ho
 	    end
 
         if sleep_time > Dates.Millisecond(0)
-            println("wait upto $(lt(pass_time[i,1])) $sleep_time ")
+            println("wait upto $(lt(pass_time[i,1])) for $(pass_satellite_name[i]) $sleep_time ")
             sleep(sleep_time)
         end
 
@@ -131,10 +131,18 @@ function process(config,tles,eop_IAU1980,t0; debug = false, tz_offset = Dates.Ho
             @info("start recording $(pass_satellite_name[i]) to file $wavname")
 
             # satellite is still in the sky
-            record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 -`,`sox -t raw -r 60000 -e signed -b 32 - $(wavname)`), wait = false);
+            #record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 -`,`sox -t raw -r 60000 -e signed -b 32 - $(wavname)`), wait = false);
 
-	        #record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 - `,`sox -t wav - $wavname rate 11025`), wait = false);
-	        # get FM radio for debugging
+	    # https://web.archive.org/web/20191007192042/http://ajoo.blog/intro-to-rtl-sdr-part-ii-software.html
+	    gain = 40
+	    sampling_rate = 60_000
+	    ppm_error = 55
+	    ppm_error = 0
+	    fir_size = 9
+	    
+	    #record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 - `,`sox -t wav - $wavname rate 11025`), wait = false);
+	    record = run(pipeline(`rtl_fm -f $(frequency) -s $(sampling_rate) -g $(gain) -p $(ppm_error) -E wav -E deemp -F $(fir_size) - `,`sox -t wav - $wavname rate 11025`), wait = false);
+	    # get FM radio for debugging
             #record = run(pipeline(`rtl_fm -M wbfm -f 88.5e6 -E wav`, `sox -t raw -e signed -c 1 -b 16 -r 32k - $wavname`), wait = false);
             println("Recording during ",pass_duration)
             sleep(pass_duration)
