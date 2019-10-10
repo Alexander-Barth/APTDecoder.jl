@@ -45,7 +45,7 @@ function sat_time(eop_IAU1980,ground_station,tle,t0,t1)
     ground_station_rad = (ground_station[2] * pi/180,ground_station[1] * pi/180 ,ground_station[3])
     # predict for the next 3 days since epoch of the satellite
     Δt = 24*60*60*3
-    out = ground_station_accesses(orbp, ground_station_rad,Δt,TEME(),ITRF(),eop_IAU1980; θ = 10*pi/180)
+    out = ground_station_accesses(orbp, ground_station_rad,Δt,TEME(),ITRF(),eop_IAU1980; θ = 30*pi/180)
     # keep only time between t0 and t1
     sel = (t0 .<= out[:,1]) .& (out[:,2] .< t1)
     @show tle.name, out
@@ -134,7 +134,7 @@ function process(config,tles,eop_IAU1980,t0; debug = false, tz_offset = Dates.Ho
             #record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 -`,`sox -t raw -r 60000 -e signed -b 32 - $(wavname)`), wait = false);
 
 	    # https://web.archive.org/web/20191007192042/http://ajoo.blog/intro-to-rtl-sdr-part-ii-software.html
-	    gain = 40
+	    gain = 10
 	    sampling_rate = 60_000
 	    ppm_error = 55
 	    ppm_error = 0
@@ -149,7 +149,7 @@ function process(config,tles,eop_IAU1980,t0; debug = false, tz_offset = Dates.Ho
             kill.(record.processes,Base.SIGINT)
 
             println("Finish recording\n")
-
+	    sleep(10)
             # debug
 	        if debug
                 wavname_example = joinpath(dirname(pathof(APTDecoder)),"..","examples","gqrx_20190823_173900_137620000.wav")
