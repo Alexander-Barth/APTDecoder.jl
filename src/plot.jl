@@ -55,18 +55,22 @@ function makeplots(wavname,satellite_name;
         channel_b = prefix * "_channel_b.png")
 
     FileIO.save(imagenames.rawname, colorview(Gray, data[:,1:3:end]./maximum(data)))
+    grid_color = [0,0.7,0.6]
 
     fig = figure()
+    plt.style.use("dark_background")
     Alon,Alat,Adata = APTDecoder.georeference(
         channelA,satellite_name,datatime,starttime, eop = eop)
     APTDecoder.plot(Alon,Alat,Adata; coastlinecolor=coastlinecolor, cmap=cmap)
-    savefig(imagenames.channel_a,dpi=dpi)
+    plt.grid(linestyle = "--",color=grid_color)
+    savefig(imagenames.channel_a,dpi=dpi,pad_inches=0, bbox_inches="tight", transparent=false)
     fig.clf()
 
     Blon,Blat,Bdata = APTDecoder.georeference(
         channelB,satellite_name,datatime,starttime, eop = eop)
     APTDecoder.plot(Blon,Blat,Bdata; coastlinecolor=coastlinecolor, cmap=cmap)
-    savefig(imagenames.channel_b,dpi=dpi)
+    plt.grid(linestyle = "--",color=grid_color)
+    savefig(imagenames.channel_b,dpi=dpi,pad_inches=0, bbox_inches="tight", transparent=false)
     close(fig)
 
     return imagenames
