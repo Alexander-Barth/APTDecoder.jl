@@ -1,4 +1,4 @@
-function plot(plon,plat,data; cmap = "RdYlBu_r", coastlinecolor="darkgrey")
+function plot(plon,plat,data; cmap = "RdYlBu_r", coastlinecolor="magenta")
     pcolormesh(plon,plat,data,cmap=cmap)
     lon,lat,lsmask = landseamask(;resolution='l',grid=5)
     contour(lon,lat,lsmask',[0.5],linewidths=[1.],colors=coastlinecolor);
@@ -32,7 +32,7 @@ function makeplots(wavname,satellite_name;
                    eop = nothing,
                    prefix = replace(wavname,r".wav$" => ""),
                    qrange = (0.01,0.99),
-                   coastlinecolor = "darkgray",
+                   coastlinecolor = "magenta",
                    cmap = "RdYlBu_r",
                    dpi = 150)
 
