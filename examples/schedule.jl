@@ -133,25 +133,29 @@ function process(config,tles,eop_IAU1980,t0; debug = false, tz_offset = Dates.Ho
             # satellite is still in the sky
             #record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 -`,`sox -t raw -r 60000 -e signed -b 32 - $(wavname)`), wait = false);
 
-	    # https://web.archive.org/web/20191007192042/http://ajoo.blog/intro-to-rtl-sdr-part-ii-software.html
-	    gain = 10
-	    sampling_rate = 60_000
-	    sampling_rate = 50_000
-	    ppm_error = 55
-	    ppm_error = 0
-	    fir_size = 9
-	    #fir_size = 0
+	        # https://web.archive.org/web/20191007192042/http://ajoo.blog/intro-to-rtl-sdr-part-ii-software.html
+	        gain = 10
+	        sampling_rate = 60_000
+	        sampling_rate = 48_000
+	        ppm_error = 55
+	        ppm_error = 0
+	        fir_size = 9
+	        #fir_size = 0
 
-	    #record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 - `,`sox -t wav - $wavname rate 11025`), wait = false);
-	    record = run(pipeline(`rtl_fm -f $(frequency) -s $(sampling_rate) -g $(gain) -p $(ppm_error) -E wav -E deemp -F $(fir_size) - `,`sox -t wav - $wavname rate 11025`), wait = false);
-	    # get FM radio for debugging
+            #to check
+            #arctan_method = "fast"
+            # -E offset
+            # -A $(arctan_method)
+	        #record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 - `,`sox -t wav - $wavname rate 11025`), wait = false);
+	        record = run(pipeline(`rtl_fm -f $(frequency) -s $(sampling_rate) -g $(gain) -p $(ppm_error) -E wav -E deemp -F $(fir_size) - `,`sox -t wav - $wavname rate 11025`), wait = false);
+	        # get FM radio for debugging
             #record = run(pipeline(`rtl_fm -M wbfm -f 88.5e6 -E wav`, `sox -t raw -e signed -c 1 -b 16 -r 32k - $wavname`), wait = false);
             println("Recording during ",pass_duration)
             sleep(pass_duration)
             kill.(record.processes,Base.SIGINT)
 
             println("Finish recording\n")
-	    sleep(10)
+	        sleep(10)
             # debug
 	        if debug
                 wavname_example = joinpath(dirname(pathof(APTDecoder)),"..","examples","gqrx_20190823_173900_137620000.wav")
@@ -165,7 +169,11 @@ function process(config,tles,eop_IAU1980,t0; debug = false, tz_offset = Dates.Ho
             close("all")
 
             #if i < 3
-            message = "$(pass_satellite_name[i]) $(Dates.format(dt,"yyyymmdd"))_$(Dates.format(dt,"HHMMSS"))"
+            message = "$(pass_satellite_name[i]) $(lt(dt))"
+            if i < length(pass_satellite_name)
+                message *= " - next at $(lt(pass_time[i+1,1]))"
+            end
+
             publish(config["twitter"],message,[imagenames.rawname,imagenames.channel_a,imagenames.channel_b])
             #end
         end
