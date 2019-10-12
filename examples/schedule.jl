@@ -136,10 +136,12 @@ function process(config,tles,eop_IAU1980,t0; debug = false, tz_offset = Dates.Ho
 	    # https://web.archive.org/web/20191007192042/http://ajoo.blog/intro-to-rtl-sdr-part-ii-software.html
 	    gain = 10
 	    sampling_rate = 60_000
+	    sampling_rate = 50_000
 	    ppm_error = 55
 	    ppm_error = 0
 	    fir_size = 9
-	    
+	    #fir_size = 0
+
 	    #record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 - `,`sox -t wav - $wavname rate 11025`), wait = false);
 	    record = run(pipeline(`rtl_fm -f $(frequency) -s $(sampling_rate) -g $(gain) -p $(ppm_error) -E wav -E deemp -F $(fir_size) - `,`sox -t wav - $wavname rate 11025`), wait = false);
 	    # get FM radio for debugging
