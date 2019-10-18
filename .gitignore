@@ -1,4 +1,13 @@
 *~
+*.bak
 *.cov
+/deps/build.log
+/deps/deps.jl
+/docs/build/
+/examples/.ipynb_checkpoints/
+/lcov.info
 Manifest.toml
-examples/APTDecoder.toml
+/notes.txt
+/res/
+/test/perf/*.err
+/test/perf/*.out
