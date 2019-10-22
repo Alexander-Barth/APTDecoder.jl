@@ -30,7 +30,9 @@ const satellites = Dict(
     "NOAA 18" => (frequency = 137_912_500,
                   protocol = :APT),
     "NOAA 15" => (frequency = 137_620_000,
-                  protocol = :APT)
+                  protocol = :APT),
+    "METEOR-M 2" => (frequency = 137_900_000,
+                  protocol = :MM),
 )
 
 
@@ -48,7 +50,7 @@ function sat_time(eop_IAU1980,ground_station,tle,t0,t1)
     out = ground_station_accesses(orbp, ground_station_rad,Δt,TEME(),ITRF(),eop_IAU1980; θ = 30*pi/180)
     # keep only time between t0 and t1
     sel = (t0 .<= out[:,1]) .& (out[:,2] .< t1)
-    @show tle.name, out
+    #@show tle.name, out
     out = out[sel,:]
     return out
 end
@@ -126,35 +128,37 @@ function process(config,tles,eop_IAU1980,t0; debug = false, tz_offset = Dates.Ho
 	            pass_duration = Dates.Second(10)
 	        end
             frequency = satellites[pass_satellite_name[i]].frequency
+            protocol = satellites[pass_satellite_name[i]].protocol
 
-            wavname = joinpath(outdir,"APTDecoder_$(Dates.format(dt,"yyyymmdd"))_$(Dates.format(dt,"HHMMSS"))_$(frequency).wav")
-            @info("start recording $(pass_satellite_name[i]) to file $wavname")
+	    if protocol == :APT
+		wavname = joinpath(outdir,"APTDecoder_$(Dates.format(dt,"yyyymmdd"))_$(Dates.format(dt,"HHMMSS"))_$(frequency).wav")
+		@info("start recording $(pass_satellite_name[i]) to file $wavname")
 
-            # satellite is still in the sky
-            #record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 -`,`sox -t raw -r 60000 -e signed -b 32 - $(wavname)`), wait = false);
+		# satellite is still in the sky
+		#record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 -`,`sox -t raw -r 60000 -e signed -b 32 - $(wavname)`), wait = false);
 
-	        # https://web.archive.org/web/20191007192042/http://ajoo.blog/intro-to-rtl-sdr-part-ii-software.html
-	        gain = 10
-	        sampling_rate = 60_000
-	        sampling_rate = 48_000
-	        ppm_error = 55
-	        ppm_error = 0
-	        fir_size = 9
-	        #fir_size = 0
+		    # https://web.archive.org/web/20191007192042/http://ajoo.blog/intro-to-rtl-sdr-part-ii-software.html
+		    gain = 10
+		    sampling_rate = 60_000
+		    sampling_rate = 48_000
+		    ppm_error = 55
+		    ppm_error = 0
+		    fir_size = 9
+		    #fir_size = 0
 
-            #to check
-            #arctan_method = "fast"
-            # -E offset
-            # -A $(arctan_method)
-	        #record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 - `,`sox -t wav - $wavname rate 11025`), wait = false);
-	        record = run(pipeline(`rtl_fm -f $(frequency) -s $(sampling_rate) -g $(gain) -p $(ppm_error) -E wav -E deemp -F $(fir_size) - `,`sox -t wav - $wavname rate 11025`), wait = false);
-	        # get FM radio for debugging
-            #record = run(pipeline(`rtl_fm -M wbfm -f 88.5e6 -E wav`, `sox -t raw -e signed -c 1 -b 16 -r 32k - $wavname`), wait = false);
-            println("Recording during ",pass_duration)
-            sleep(pass_duration)
-            kill.(record.processes,Base.SIGINT)
+		#to check
+		#arctan_method = "fast"
+		# -E offset
+		# -A $(arctan_method)
+		    #record = run(pipeline(`rtl_fm -f $(frequency) -s 60k -g 45 -p 55 -E wav -E deemp -F 9 - `,`sox -t wav - $wavname rate 11025`), wait = false);
+		    record = run(pipeline(`rtl_fm -f $(frequency) -s $(sampling_rate) -g $(gain) -p $(ppm_error) -E wav -E deemp -F $(fir_size) -E offset - `,`sox -t wav - $wavname rate 11025`), wait = false);
+		    # get FM radio for debugging
+		#record = run(pipeline(`rtl_fm -M wbfm -f 88.5e6 -E wav`, `sox -t raw -e signed -c 1 -b 16 -r 32k - $wavname`), wait = false);
+		println("Recording during ",pass_duration)
+		sleep(pass_duration)
+		kill.(record.processes,Base.SIGINT)
 
-            println("Finish recording\n")
+		println("Finish recording\n")
 	        sleep(10)
             # debug
 	        if debug
@@ -165,16 +169,31 @@ function process(config,tles,eop_IAU1980,t0; debug = false, tz_offset = Dates.Ho
 
             println("Making plots")
 	        @show wavname,pass_satellite_name[i]
-            imagenames = APTDecoder.makeplots(wavname,pass_satellite_name[i]; eop = eop_IAU1980)
-            close("all")
+                imagenames = APTDecoder.makeplots(wavname,pass_satellite_name[i]; eop = eop_IAU1980)
+                close("all")
+                images = [imagenames.rawname,imagenames.channel_a,imagenames.channel_b]
+            else
+		pngname = joinpath(outdir,"APTDecoder_$(Dates.format(dt,"yyyymmdd"))_$(Dates.format(dt,"HHMMSS"))_$(frequency).png")
+	        run(`/home/pi/.julia/dev/APTDecoder/examples/record_meteor.sh $(Dates.value(pass_duration)/1000) $pngname`)
+		images =
+		   if filesize(pngname) > 0
+		      [pngname]
+		   else
+		      []
+		   end
+	    end
 
             #if i < 3
             message = "$(pass_satellite_name[i]) $(lt(dt))"
             if i < length(pass_satellite_name)
                 message *= " - next at $(lt(pass_time[i+1,1]))"
             end
-
-            publish(config["twitter"],message,[imagenames.rawname,imagenames.channel_a,imagenames.channel_b])
+	    try
+                publish(config["twitter"],message,images)
+	    catch e
+	        @warn "message cannot be posted"
+		@show e
+	    end
             #end
         end
 
