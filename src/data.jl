@@ -11,6 +11,8 @@ https://github.com/matplotlib/basemap/tree/master/lib/mpl_toolkits/basemap/data
 The data is originally from [GMT](http://gmt.soest.hawaii.edu/) and distributed under the terms of the
 [GPL licences](https://github.com/matplotlib/basemap/blob/a551c2361314670dc7d95143190d3d48ba750d20/LICENSE_data).
 
+Example:
+
 ```julia
 using PyPlot
 lon,lat,data = APTDecoder.landseamask(;resolution='c',grid=5)
