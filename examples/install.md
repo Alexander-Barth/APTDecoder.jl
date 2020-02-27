@@ -58,3 +58,9 @@ It is necessary to either restart `udev` or the whole system:
 ```bash
 sudo service udev restart
 ```
+
+
+# Add systemd service
+
+sudo cp APTDecoder.service /etc/systemd/system/
+sudo systemctl start APTDecoder.service

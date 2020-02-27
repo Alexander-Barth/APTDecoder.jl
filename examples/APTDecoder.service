@@ -1,0 +1,14 @@
+[Unit]
+Description=APTDecoder
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/julia schedule.jl
+WorkingDirectory=/home/pi/.julia/dev/APTDecoder/examples
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
