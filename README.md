@@ -1,8 +1,8 @@
 # Decoder for the Automatic Picture Transmission protocol
 
-[![Build Status](https://travis-ci.org/Alexander-Barth/APTDecoder.jl.svg?branch=master)](https://travis-ci.org/Alexander-Barth/APTDecoder.jl)
+[![Build Status](https://github.com/Alexander-Barth/APTDecoder.jl/workflows/CI/badge.svg)](https://github.com/Alexander-Barth/APTDecoder.jl/actions)
 [![Build Status Windows](https://ci.appveyor.com/api/projects/status/github/Alexander-Barth/APTDecoder.jl?branch=master&svg=true)](https://ci.appveyor.com/project/Alexander-Barth/aptdecoder-jl)
-[![Coverage Status](https://coveralls.io/repos/Alexander-Barth/APTDecoder.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/Alexander-Barth/APTDecoder.jl?branch=master)
+[![codecov.io](http://codecov.io/github/Alexander-Barth/APTDecoder.jl/coverage.svg?branch=master)](http://codecov.io/github/Alexander-Barth/APTDecoder.jl?branch=master)
 [![documentation latest](https://img.shields.io/badge/docs-latest-blue.svg)](https://alexander-barth.github.io/APTDecoder.jl/latest/)
 
 
