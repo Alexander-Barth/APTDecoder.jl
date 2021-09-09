@@ -24,6 +24,7 @@ function wxload(pngname)
     return datatime,channel,data_all[end:-1:1,end:-1:1]
 end
 
+
 function georeference(pngname,satellite_name,channel;
                       starttime = DateTime(1,1,1,0,0,0),
                       tles = get_tle(:weather))
@@ -52,7 +53,11 @@ function georeference(pngname,satellite_name,channel;
     return plon,plat,data
 end
 
+"""
+   tles = get_tle(:weather)
 
+Load the two-line elements (TLEs) data from https://www.celestrak.com for weather satellites. 
+"""
 function get_tle(satellite_type)
     @assert satellite_type == :weather
     # get satellite orbit information (TLE)
