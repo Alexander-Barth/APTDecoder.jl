@@ -16,7 +16,7 @@ The data is first recorded using a software like GQRX (https://noaa-apt.mbernard
 * Launch julia and run to following commands to install `APTDecoder`:
 
 ```julia
-import Pkg
+using Pkg
 Pkg.develop(PackageSpec(url="https://github.com/Alexander-Barth/APTDecoder.jl"))
 ```
 
