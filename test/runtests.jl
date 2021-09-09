@@ -7,7 +7,10 @@ using RemoteFiles
 
 @testset "decoding" begin
     wavname = "gqrx_20190825_182745_137620000.wav"
-    download("https://archive.org/download/gqrx_20190825_182745_137620000/gqrx_20190825_182745_137620000.wav",wavname)
+
+    if !isfile(wavname)
+        download("https://archive.org/download/gqrx_20190825_182745_137620000/gqrx_20190825_182745_137620000.wav",wavname)
+    end
     APTDecoder.makeplots(wavname,"NOAA 15")
 
     @test isfile(replace(wavname,r"\.wav$" => "_raw.png"))
