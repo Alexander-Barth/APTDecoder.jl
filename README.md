@@ -5,8 +5,8 @@
 [![codecov.io](http://codecov.io/github/Alexander-Barth/APTDecoder.jl/coverage.svg?branch=master)](http://codecov.io/github/Alexander-Barth/APTDecoder.jl?branch=master)
 [![documentation latest](https://img.shields.io/badge/docs-latest-blue.svg)](https://alexander-barth.github.io/APTDecoder.jl/latest/)
 
-
-All you need is a (relatively inexpensive) software-defined radio and antenna for 137 MHz (following for example these [instructions](https://www.instructables.com/id/NOAA-Satellite-Signals-with-a-PVC-QFH-Antenna-and-/)) to receive data from the NOAA weather satellites NOAA 15, NOAA 18 and NOAA 19.
+This packages allows to decode data from the NOAA weather satellites NOAA 15, NOAA 18 and NOAA 19.
+All you need is a (relatively inexpensive) software-defined radio and antenna for 137 MHz (following for example these [instructions](https://www.instructables.com/id/NOAA-Satellite-Signals-with-a-PVC-QFH-Antenna-and-/)) to receive data from these weather satellites.
 The data is first recorded using a software like GQRX (https://noaa-apt.mbernardi.com.ar/guide.html).
 
 
