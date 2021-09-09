@@ -1,6 +1,6 @@
 function plot(plon,plat,data; cmap = "RdYlBu_r", coastlinecolor="magenta")
     pcolormesh(plon,plat,data,cmap=cmap)
-    lon,lat,lsmask = landseamask(;resolution='l',grid=5)
+    lon,lat,lsmask = GeoDatasets.landseamask(;resolution='l',grid=5)
     contour(lon,lat,lsmask',[0.5],linewidths=[1.],colors=coastlinecolor);
     xlim(extrema(plon))
     ylim(extrema(plat))

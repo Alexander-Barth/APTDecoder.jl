@@ -42,15 +42,6 @@ using RemoteFiles
     @test_throws ErrorException APTDecoder.georeference(pngname,satellite_name,channel)
 end
 
-@testset "landseamask" begin
-    lon,lat,data = APTDecoder.landseamask(;resolution='c',grid=5)
-    @test size(data,1) == length(lon)
-    @test size(data,2) == length(lat)
-
-    @test_throws ErrorException APTDecoder.landseamask(;resolution='c',grid=-999)
-    @test_throws ErrorException APTDecoder.landseamask(;resolution='g',grid=5)
-end
-
 @testset "GeoMapping" begin
     @test APTDecoder.GeoMapping.azimuth(0,0,1,0) ≈ 0;
     @test APTDecoder.GeoMapping.azimuth(0,0,0,1) ≈ 90;

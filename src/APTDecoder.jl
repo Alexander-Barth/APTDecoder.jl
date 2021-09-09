@@ -16,6 +16,7 @@ using CodecZlib
 using RemoteFiles
 import DSP
 using FileIO
+using GeoDatasets
 
 scans_per_seconds = 2
 
@@ -29,7 +30,6 @@ sync_frequency = (1040., # channel A
 include("GeoMapping.jl")
 include("georef.jl")
 include("decode.jl")
-include("data.jl")
 include("plot.jl")
 
 
