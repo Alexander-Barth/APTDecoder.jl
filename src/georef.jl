@@ -24,7 +24,10 @@ function wxload(pngname)
     return datatime,channel,data_all[end:-1:1,end:-1:1]
 end
 
-function georeference(pngname,satellite_name,channel; starttime = DateTime(1,1,1,0,0,0))
+function georeference(pngname,satellite_name,channel;
+                      starttime = DateTime(1,1,1,0,0,0),
+                      tles = get_tle(:weather))
+
     if !(channel in ['a','b'])
         error("channel must be 'a' or 'b'")
     end
@@ -45,7 +48,7 @@ function georeference(pngname,satellite_name,channel; starttime = DateTime(1,1,1
     data = data[end:-1:1,end:-1:1]
     datatime = (0:size(data,1)-1)/scans_per_seconds
 
-    plon,plat,data = georeference(data,satellite_name,datatime,starttime)
+    plon,plat,data = georeference(data,satellite_name,datatime,starttime, tles = tles)
     return plon,plat,data
 end
 

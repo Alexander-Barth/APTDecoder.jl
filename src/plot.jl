@@ -34,6 +34,7 @@ function makeplots(wavname,satellite_name;
                    qrange = (0.01,0.99),
                    coastlinecolor = "magenta",
                    cmap = "RdYlBu_r",
+                   tles = get_tle(:weather),
                    dpi = 150)
 
     if starttime == nothing
@@ -60,14 +61,14 @@ function makeplots(wavname,satellite_name;
     fig = figure()
     plt.style.use("dark_background")
     Alon,Alat,Adata = APTDecoder.georeference(
-        channelA,satellite_name,datatime,starttime, eop = eop)
+        channelA,satellite_name,datatime,starttime, eop = eop, tles = tles)
     APTDecoder.plot(Alon,Alat,Adata; coastlinecolor=coastlinecolor, cmap=cmap)
     plt.grid(linestyle = "--",color=grid_color)
     savefig(imagenames.channel_a,dpi=dpi,pad_inches=0, bbox_inches="tight", transparent=false)
     fig.clf()
 
     Blon,Blat,Bdata = APTDecoder.georeference(
-        channelB,satellite_name,datatime,starttime, eop = eop)
+        channelB,satellite_name,datatime,starttime, eop = eop, tles = tles)
     APTDecoder.plot(Blon,Blat,Bdata; coastlinecolor=coastlinecolor, cmap=cmap)
     plt.grid(linestyle = "--",color=grid_color)
     savefig(imagenames.channel_b,dpi=dpi,pad_inches=0, bbox_inches="tight", transparent=false)

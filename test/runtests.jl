@@ -4,6 +4,7 @@ end
 import APTDecoder
 using Test
 using RemoteFiles
+using SatelliteToolbox
 
 @testset "decoding" begin
     wavname = "gqrx_20190825_182745_137620000.wav"
@@ -11,7 +12,10 @@ using RemoteFiles
     if !isfile(wavname)
         download("https://archive.org/download/gqrx_20190825_182745_137620000/gqrx_20190825_182745_137620000.wav",wavname)
     end
-    APTDecoder.makeplots(wavname,"NOAA 15")
+    current_tles = APTDecoder.get_tle(:weather)
+    tles = SatelliteToolbox.read_tle(joinpath(dirname(pathof(APTDecoder)),"..","examples","weather-20190825.txt"))
+
+    APTDecoder.makeplots(wavname,"NOAA 15", tles = tles)
 
     @test isfile(replace(wavname,r"\.wav$" => "_raw.png"))
 
@@ -37,7 +41,7 @@ using RemoteFiles
 
     satellite_name = "NOAA 15"
     channel = 'a'
-    plon,plat,data = APTDecoder.georeference(pngname,satellite_name,channel)
+    plon,plat,data = APTDecoder.georeference(pngname,satellite_name,channel, tles = tles)
 
 
     satellite_name = "NOAA 15"
