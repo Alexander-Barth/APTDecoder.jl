@@ -103,7 +103,7 @@ function georeference(data,satellite_name,datatime,starttime;
 
     # compute satellite track
 
-    orbp = init_orbit_propagator(Val{:sgp4}, tle);
+    orbp = init_orbit_propagator(Val(:sgp4), tle);
     jdnow =
         if Int == Int64
             DatetoJD(starttime)
@@ -125,7 +125,7 @@ function georeference(data,satellite_name,datatime,starttime;
              datatime,
              datatime[end] + Δt)
 
-    o,r_TEME,v_TEME = propagate!(orbp, t);
+    r_TEME,v_TEME = propagate!(orbp, t);
 
     # download the Earth Orientation Parameters (EOP)
     eop_IAU1980 = (eop == nothing ? get_iers_eop() : eop)
