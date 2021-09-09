@@ -109,15 +109,15 @@ function georeference(data,satellite_name,datatime,starttime;
     orbp = init_orbit_propagator(Val(:sgp4), tle);
     jdnow =
         if Int == Int64
-            DatetoJD(starttime)
+            date_to_jd(starttime)
         else
             # issue on 32-bit machines
-            DatetoJD(Int(Dates.year(starttime)),
-                     Int(Dates.month(starttime)),
-                     Int(Dates.day(starttime)),
-                     Int(Dates.hour(starttime)),
-                     Int(Dates.minute(starttime)),
-                     Int(Dates.second(starttime)))
+            date_to_jd(Int(Dates.year(starttime)),
+                       Int(Dates.month(starttime)),
+                       Int(Dates.day(starttime)),
+                       Int(Dates.hour(starttime)),
+                       Int(Dates.minute(starttime)),
+                       Int(Dates.second(starttime)))
         end
 
     # time [s] from the orbit epoch
@@ -147,12 +147,12 @@ function georeference(data,satellite_name,datatime,starttime;
     # ECI(TEME) -> ECEF(ITRF) -> Geodetic coordinates
     for i = 1:length(t)
         datejd = tle.epoch + t[i]/(24*60*60)
-        M = rECItoECEF(TEME(), ITRF(), datejd, eop_IAU1980)
+        M = r_eci_to_ecef(TEME(), ITRF(), datejd, eop_IAU1980)
         # position in ITRF
         r_ITRF = M * r_TEME[i]
 
         # position of the satellite in Geodetic coordinates
-        lat[i],lon[i] = ECEFtoGeodetic(r_ITRF)
+        lat[i],lon[i] = ecef_to_geodetic(r_ITRF)
         lat[i] = 180 * lat[i]/pi
         lon[i] = 180 * lon[i]/pi
     end
