@@ -25,6 +25,47 @@ function wxload(pngname)
 end
 
 
+"""
+   tles = get_tle(:weather)
+
+Load the two-line elements (TLEs) data from https://www.celestrak.com for weather satellites.
+"""
+function get_tle(satellite_type)
+    @assert satellite_type == :weather
+    # get satellite orbit information (TLE)
+
+    @RemoteFile(tle_data,
+                "https://www.celestrak.com/NORAD/elements/weather.txt",
+                updates=:daily)
+    download(tle_data)
+
+    tles = read_tle(path(tle_data))
+end
+
+
+"""
+    plon,plat,data = APTDecoder.georeference(pngname,satellite_name,channel,...)
+
+Compute longitude and latitude of the NOAA APT satellite image in `pngname`
+using the orbit of the satellite with the name `satellite_name`
+(generally "NOAA 15", "NOAA 18", "NOAA 19").
+The file name `pngname` should  have the followng structure:
+`string_date_time_frequency.png` like `gqrx_20190811_075102_137620000.png`.
+Date and time of the file name are in UTC.
+The parameter `channel` is `'a'` or `'b'` for the two transmitted wave-length.
+
+Optional arguments are `starttime` for the date (`DateTime`) of capture
+(deduced from the filename per default) and `tles` for the two-line elements
+(TLEs) data (download if necessary).
+
+Example:
+```julia
+satellite_name = "NOAA 15"
+pngname = "gqrx_20190811_075102_137620000.png";
+channel = 'a'
+APTDecoder.georeference(pngname,satellite_name,channel)
+```
+"""
 function georeference(pngname,satellite_name,channel;
                       starttime = DateTime(1,1,1,0,0,0),
                       tles = get_tle(:weather))
@@ -53,40 +94,25 @@ function georeference(pngname,satellite_name,channel;
     return plon,plat,data
 end
 
-"""
-   tles = get_tle(:weather)
-
-Load the two-line elements (TLEs) data from https://www.celestrak.com for weather satellites. 
-"""
-function get_tle(satellite_type)
-    @assert satellite_type == :weather
-    # get satellite orbit information (TLE)
-
-    @RemoteFile(tle_data,
-                "https://www.celestrak.com/NORAD/elements/weather.txt",
-                updates=:daily)
-    download(tle_data)
-
-    tles = read_tle(path(tle_data))
-end
 
 """
-    plon,plat,data = georeference(pngname,satellite_name,channel)
+    lon,lat = APTDecoder.georeference(channel,satellite_name,datatime,starttime;
+                          eop = nothing,
+                          tles = get_tle(:weather))
 
-Compute longitude and latitude of the NOAA APT satellite image in `pngname`
+
+Compute longitude `lon` and latitude `lat` of the NOAA APT satellite data `channel`
 using the orbit of the satellite with the name `satellite_name`
 (generally "NOAA 15", "NOAA 18", "NOAA 19").
-The file name `pngname` should  have the followng structure:
-`string_date_time_frequency.png` like `gqrx_20190811_075102_137620000.png`.
-Date and time of the file name are in UTC.
 
+`datatime` and `channel` (channel A or channel B) are returned by the function `APTDecoder.decode`.
 
-Example:
-```
-satellite_name = "NOAA 15"
-pngname = "gqrx_20190811_075102_137620000.png";
-APTDecoder.georeference(pngname,satellite_name)
-```
+The argument `starttime` is the date (`DateTime`) of beginning of the capture.
+The optional parameter `tles` are the two-line elements (TLEs)
+data (download if necessary).
+
+The optional parameter `eop` are the Earth Orientation Parameters (see
+https://juliaspace.github.io/SatelliteToolbox.jl for more information)
 """
 function georeference(data,satellite_name,datatime,starttime;
                       eop = nothing,
