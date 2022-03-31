@@ -43,7 +43,7 @@ function get_tle(satellite_name,tles = APTDecoder.get_tle(:weather))
 end
 
 function sat_time(eop_IAU1980,ground_station,tle,t0,t1)
-    orbp = init_orbit_propagator(Val{:sgp4}, tle)
+    orbp = init_orbit_propagator(Val(:sgp4), tle)
     ground_station_rad = (ground_station[2] * pi/180,ground_station[1] * pi/180 ,ground_station[3])
     # predict for the next 3 days since epoch of the satellite
     Δt = 24*60*60*3
