@@ -3,7 +3,7 @@ Description=APTDecoder
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/julia schedule.jl
+ExecStart=/usr/local/bin/julia --project=. schedule.jl
 WorkingDirectory=/home/pi/.julia/dev/APTDecoder/examples
 StandardOutput=inherit
 StandardError=inherit
