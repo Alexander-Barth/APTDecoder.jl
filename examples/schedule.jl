@@ -1,4 +1,4 @@
-
+delete!(ENV,"DISPLAY")
 
 using ImageMagick
 using APTDecoder
@@ -11,6 +11,7 @@ import APTDecoder
 using PyPlot
 using PyCall
 using TimeZones
+#using TOML
 
 plt.ioff()
 #using Pkg
@@ -31,8 +32,8 @@ const satellites = Dict(
                   protocol = :APT),
     "NOAA 15" => (frequency = 137_620_000,
                   protocol = :APT),
-    "METEOR-M 2" => (frequency = 137_900_000,
-                  protocol = :MM),
+#    "METEOR-M 2" => (frequency = 137_900_000,
+#                  protocol = :MM),
 )
 
 
@@ -198,6 +199,7 @@ function process(config,tles,eop_IAU1980,t0; debug = false, tz_offset = Dates.Ho
         end
 
         pygc.collect()
+	GC.gc()
     end
 
 end
@@ -207,4 +209,6 @@ end
 #end
 # time frame of selected passes
 t0 = Dates.now(Dates.UTC);
-process(config,tles,eop_IAU1980,t0)
+process(config,tles,eop_IAU1980,t0,
+   #debug=true
+)
