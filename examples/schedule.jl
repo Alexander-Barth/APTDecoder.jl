@@ -5,20 +5,21 @@ using APTDecoder
 using SatelliteToolbox
 using Dates
 using Base64
-using JSON
-using Twitter
+using JSON3
 import APTDecoder
 using PyPlot
 using PyCall
 using TimeZones
 #using TOML
 
+include("make_post.jl")
+
 plt.ioff()
 #using Pkg
 #const TOML = Pkg.TOML
 
 #config = TOML.parsefile("APTDecoder.toml")
-config = JSON.parsefile("APTDecoder.json")
+config = JSON3.read(read("APTDecoder.json",String))
 
 tles = APTDecoder.get_tle(:weather)
 
@@ -56,20 +57,6 @@ function sat_time(eop_IAU1980,ground_station,tle,t0,t1)
     return out
 end
 
-function twitter_upload(auth,fname)
-    media = read(fname)
-    r = Twitter.post_oauth("https://upload.twitter.com/1.1/media/upload.json",Dict("media" => base64encode(media)))
-    resp = JSON.parse(String(r.body))
-    return resp["media_id_string"]
-end
-
-function publish(auth,message,fnames)
-    twitterauth(auth["consumer_key"], auth["consumer_token"], auth["access_token"], auth["access_secret"])
-    Twitter.post_status_update(
-        status = message,
-        media_ids =
-        join([twitter_upload(auth,fname) for fname in fnames],","))
-end
 
 function process(config,tles,eop_IAU1980,t0; debug = false, tz_offset = Dates.Hour(2))
     pygc = PyCall.pyimport("gc")
@@ -190,7 +177,7 @@ function process(config,tles,eop_IAU1980,t0; debug = false, tz_offset = Dates.Ho
                 message *= " - next at $(lt(pass_time[i+1,1]))"
             end
 	    try
-                publish(config["twitter"],message,images)
+                publish(config,message,images)
 	    catch e
 	        @warn "message cannot be posted"
 		@show e
