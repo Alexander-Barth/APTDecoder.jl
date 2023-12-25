@@ -10,7 +10,7 @@ function publish(config,message,fnames; mime_type = "image/png")
    media_ids = [ActivityPub.post_media(conn,fname,mime_type,
 	                                    description = basename(fname)) for fname in fnames]
 				  
-   response = ActivityPub.post_status(conn,status, media_ids = media_ids)
+   response = ActivityPub.post_status(conn,message, media_ids = media_ids)
    return nothing
 end
 
