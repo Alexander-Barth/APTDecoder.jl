@@ -1,7 +1,7 @@
 module APTDecoder
 
 if Sys.islinux()
-    # must load first
+    # must be loaded first
     # https://github.com/JuliaIO/ImageMagick.jl/issues/142#issuecomment-433691895
     using ImageMagick
 end
@@ -17,6 +17,7 @@ using RemoteFiles
 import DSP
 using FileIO
 using GeoDatasets
+using GeoMapping
 
 scans_per_seconds = 2
 
@@ -25,12 +26,8 @@ scans_per_seconds = 2
 sync_frequency = (1040., # channel A
                   832.)   # channel B
 
-
-
-include("GeoMapping.jl")
 include("georef.jl")
 include("decode.jl")
 include("plot.jl")
-
 
 end # module
