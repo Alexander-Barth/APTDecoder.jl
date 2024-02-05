@@ -10,7 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.0'
+          - '1.6'
           - '1'
           - 'nightly'
         os:
@@ -35,7 +35,8 @@ jobs:
             ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@latest
       - run: |
-          sudo apt-get install python3-matplotlib
+          sudo apt update
+          sudo apt install python3-matplotlib
           git config --global user.name Tester
           git config --global user.email te@st.er
       - uses: julia-actions/julia-runtest@latest
