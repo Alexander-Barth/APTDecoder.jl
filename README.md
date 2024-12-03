@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/Alexander-Barth/APTDecoder.jl/workflows/CI/badge.svg)](https://github.com/Alexander-Barth/APTDecoder.jl/actions)
 [![Build Status Windows](https://ci.appveyor.com/api/projects/status/github/Alexander-Barth/APTDecoder.jl?branch=master&svg=true)](https://ci.appveyor.com/project/Alexander-Barth/aptdecoder-jl)
-[![codecov.io](http://codecov.io/github/Alexander-Barth/APTDecoder.jl/coverage.svg?branch=master)](http://codecov.io/github/Alexander-Barth/APTDecoder.jl?branch=master)
+[![codecov](https://codecov.io/github/Alexander-Barth/APTDecoder.jl/graph/badge.svg?token=joW0OlUdLI)](https://codecov.io/github/Alexander-Barth/APTDecoder.jl)
 [![documentation latest](https://img.shields.io/badge/docs-latest-blue.svg)](https://alexander-barth.github.io/APTDecoder.jl/latest/)
 
 This packages allows to decode data from the NOAA weather satellites NOAA 15, NOAA 18 and NOAA 19.
